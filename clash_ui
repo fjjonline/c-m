@@ -1,0 +1,1807 @@
+#!/bin/bash
+#======================================================
+#   System Required:  Debian 10+ 
+#   Description: Manage clash
+#   Author: J. 20211219
+#======================================================
+
+
+end="\033[0m"
+black="\033[0;30m"
+blackb="\033[1;30m"
+white="\033[0;37m"
+whiteb="\033[1;37m"
+red="\033[0;31m"
+redb="\033[1;31m"
+green="\033[0;32m"
+greenb="\033[1;32m"
+yellow="\033[0;33m"
+yellowb="\033[1;33m"
+blue="\033[0;34m"
+blueb="\033[1;34m"
+purple="\033[0;35m"
+purpleb="\033[1;35m"
+lightblue="\033[0;36m"
+lightblueb="\033[1;36m"
+
+
+sh_ver="3.0.2"
+
+
+url="http://129.226.175.232:8282/"
+
+url_cdn="https://gh.api.99988866.xyz"
+
+cpu=$(hostnamectl | grep Architecture: | awk '{print $2}')
+
+system=$(cat /etc/issue | awk '{print $1}')
+gateway=$(cat /etc/network/interfaces |grep gateway | awk '{print $2}' | head -n 1)
+
+local_ip=$(ip a 2>&1 | grep -w 'inet' | grep 'global' | grep -E '\ 1(92|0|72|00|1)\.' | sed 's/.*inet.//g' | sed 's/\/[0-9][0-9].*$//g' | head -n 1);
+
+
+eth_n=$(ip --oneline link show up | grep -v "lo" | awk '{print$2;exit}' | cut -d':' -f1 | cut -d'@' -f1)
+
+
+
+webget2(){
+	#参数【$1】代表下载目录，【$2】代表在线地址
+	#参数【$3】代表输出显示，【$4】不启用重定向
+	if curl --version > /dev/null 2>&1;then
+		[ "$3" = "echooff" ] && progress='-s' || progress='-#'
+		[ -z "$4" ] && redirect='-L' || redirect=''
+		result=$(curl -w %{http_code} --connect-timeout 5 $progress $redirect -ko $1 $2)
+	else
+		if wget --version > /dev/null 2>&1;then
+			[ "$3" = "echooff" ] && progress='-q' || progress='-q --show-progress'
+			[ "$4" = "rediroff" ] && redirect='--max-redirect=0' || redirect=''
+			certificate='--no-check-certificate'
+			timeout='--timeout=3'
+		fi
+		[ "$3" = "echoon" ] && progress=''
+		[ "$3" = "echooff" ] && progress='-q'
+		wget $progress $redirect $certificate $timeout -O $1 $2 
+		[ $? -eq 0 ] && result="200"
+	fi
+}
+
+
+# check root
+[[ $EUID -ne 0 ]] && echo -e "${red}错误:  必须使用root用户运行此脚本!\n${end}" && exit 1
+
+# check os
+if cat /etc/issue | grep -Eqi "debian"; then
+    release="debian"
+elif cat /etc/issue | grep -Eqi "Armbian"; then
+    release="Armbian"
+else
+    echo -e "${red}请使用 Debian或Armbian 系统!\n${end}" && exit 1
+fi
+
+
+os_version=""
+
+# os version
+if [[ -f /etc/os-release ]]; then
+    os_version=$(awk -F'[= ."]' '/VERSION_ID/{print $3}' /etc/os-release)
+fi
+if [[ -z "$os_version" && -f /etc/lsb-release ]]; then
+    os_version=$(awk -F'[= ."]+' '/DISTRIB_RELEASE/{print $2}' /etc/lsb-release)
+fi
+
+if [[ x"${release}" == x"debian" ]]; then
+    if [[ ${os_version} -lt 10 ]]; then
+        echo -e "${red}请使用 Debian 10 或更高版本的系统!\n${end}" && exit 1
+    fi
+fi
+
+confirm() {
+    if [[ $# > 1 ]]; then
+        echo && read -p "$1 [默认$2]: " temp
+        if [[ x"${temp}" == x"" ]]; then
+            temp=$2
+        fi
+    else
+        read -p "$1 [y/n]: " temp
+    fi
+    if [[ x"${temp}" == x"y" || x"${temp}" == x"Y" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+
+
+supervisor_config() {
+cat << EOF > /etc/supervisor/supervisord.conf
+; supervisor config file
+
+[unix_http_server]
+file=/var/run/supervisor.sock     ;UNIX socket 文件，supervisorctl 会使用
+chmod=0700                        ;socket文件的mode，默认是0700
+;chown=nobody:nogroup             ;socket文件的owner，格式：uid:gid
+
+;[inet_http_server]                ;HTTP服务器，提供web管理界面
+;port=0.0.0.0:9089                 ;Web管理后台运行的IP和端口，如果开放到公网，需要注意安全性
+;username=admin                    ;登录管理后台的用户名
+;password=admin                    ;登录管理后台的密码
+
+[supervisord]
+logfile=/tmp/supervisord.log     ;日志文件，默认是 supervisord.log
+pidfile=/var/run/supervisord.pid            ;pid 文件
+childlogdir=/var/log/supervisor
+
+[rpcinterface:supervisor]
+supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
+
+[supervisorctl]
+serverurl=unix:///var/run/supervisor.sock 	;通过UNIX socket连接supervisord，路径与unix_http_server部分的file一致
+;serverurl=http://127.0.0.1:9088 						;通过HTTP的方式连接supervisord
+
+
+[include]
+files = /etc/supervisor/conf.d/*.conf
+EOF
+     sudo supervisorctl update >> /dev/null 2>&1
+     sudo supervisorctl reload >> /dev/null 2>&1
+}
+
+supervisor_clash_config() {
+cat << EOF > /etc/supervisor/conf.d/clash.conf
+[program:clash]                                             ;管理clash进程
+user=root                                                   ;启动进程用户，默认是root
+command=/usr/bin/clash -d /srv/clash/                       ;程序启动命令
+autostart=true                                              ;在supervisord启动的时候也自动启动
+startsecs=10                                                ;启动后确认无异常时间
+autorestart=true                                            ;程序退出后自动重启,可选值：[unexpected,true,false]，默认为unexpected，表示进程意外杀死后才重启
+startretries=3                                              ;启动失败自动重试次数，默认是3
+redirect_stderr=true 																				;把stderr重定向到stdout，默认false
+stdout_logfile_maxbytes=20MB  															;stdout 日志文件大小，默认50MB
+stdout_logfile_backups = 5   													   		;stdout 日志文件备份数，默认是10
+stdout_logfile=/tmp/clash.log						      	            ;stdout 日志文件，需要注意当指定目录不存在时无法正常启动，所以需要手动创建目录（supervisord 会自动创建日志文件）
+EOF
+}
+
+supervisor_mosdns_config() {
+cat << EOF > /etc/supervisor/conf.d/mosdns.conf
+[program:mosdns]                                            ;管理mosdns进程
+user=root                                                   ;启动进程用户，默认是root
+command=/usr/bin/mosdns -dir /srv/mosdns/ -c config.yaml    ;程序启动命令
+autostart=true                                              ;在supervisord启动的时候也自动启动
+startsecs=10                                                ;启动后确认无异常时间
+autorestart=true                                            ;程序退出后自动重启,可选值：[unexpected,true,false]，默认为unexpected，表示进程意外杀死后才重启
+startretries=3                                              ;启动失败自动重试次数，默认是3
+redirect_stderr=true 																				;把stderr重定向到stdout，默认false
+stdout_logfile_maxbytes=20MB  															;stdout 日志文件大小，默认50MB
+stdout_logfile_backups = 5   													   		;stdout 日志文件备份数，默认是10
+#stdout_logfile=/tmp/mosdns.log								              ;stdout 日志文件，需要注意当指定目录不存在时无法正常启动，所以需要手动创建目录（supervisord 会自动创建日志文件）
+EOF
+}
+
+
+
+dler_clash_config() {
+     if [ ! -d "/srv/clash" ]; then
+     mkdir /srv/clash
+     fi  
+cat << EOF > /srv/clash/config.yaml
+# 系统参数
+port: 7890                        # HTTP代理端口
+socks-port: 7891                  # SOCKS代理端口
+redir-port: 7892                  # 透明代理端口（for Linux or MacOS）不能更改
+mixed-port: 7893                  # 集成端口，http与socks
+#authentication:                   # 验证
+#  - "user:user"                 # http与socks的账号跟密码，推荐使用
+allow-lan: true                   # 允许局域网连接
+mode: Script                      # Rule or Script    # 工作模式（有Global全局，Rule规则，Direct直连,Script脚本）
+log-level: info                   # 日志级别（info / warning / error / debug / silent）
+ipv6: false                       # 假
+external-controller: 0.0.0.0:9090 # 外部控制面板监听端口
+external-ui: dashboard            # 外部控制面板仪表板
+secret: ""                        # dashboard面板的密码，同时也是tracing的密码
+interface-name: $eth_n            # ip a 查看接口名称，确认一致 
+profile:                          # 描述
+  store-selected: true            # 策略组选择缓存开关，打开后可以保存策略组选择，重启不会回复默认
+  tracing: true                   # tracing开关，必须打开才能对接tracing
+
+
+# 实验性功能
+experimental:
+  ignore-resolve-fail: true
+
+# TUN设置
+tun:
+  enable: true         
+  stack: gvisor
+  dns-hijack:
+    - tcp://8.8.8.8:53
+    - tcp://8.8.4.4:53
+    - 8.8.8.8:53
+    - 8.8.8.8:53
+
+# DNS设置  
+dns:
+  enable: true
+  ipv6: false
+  listen: 127.0.0.1:5352         # DNS监听端口!!!clash下，此处不能改，切记!!!!
+  # DNS解析模式（redir-host # or fake-ip），这里重点解释一下：
+  # redir-host为真实IP模式，需要设置nameserver（国内）和fallback（国外）两组DNS，当设备发起DNS请求，CLASH会同时向两组里面所有服务器发起请求，然后首先拿nameserver中最快返回的结果去匹配规则，使用GEOIP判断此IP的所属区域，如果属于国内（CN）或保留地址则直接响应给客户端，其他情况则把fallback中的结果响应给客户端
+  # fake-ip则相反，当clash收到请求，会直接返回一个198.18.0.1/16的假IP给设备，同时 Clash 继续解析域名规则和 IP 规则，而且如果 Clash DNS 匹配到了域名规则、则不需要向上游 DNS 请求，Clash 已经可以直接将连接发给代理服务器，节省了 Clash DNS 向上游 DNS 请求解析
+  default-nameserver:
+    - 223.5.5.5
+    - 223.6.6.6
+    - 8.8.8.8
+    - 8.8.4.4
+  enhanced-mode: fake-ip         # 理论上来说，fake-ip具有更好的响应速度跟抗污染能力（主要还得看规则）。由于灯塔提前分流了国内外流量，国内流量不经过clash，所以选择fake-ip可以得到更好的效果，当然，还是得看规则完不完整。有需要返回真实IP的可以选择redir-host，老实说两种DNS模式在实际体验中差别不大
+  fake-ip-range: 198.19.0.1/16   # ip范围
+  use-hosts: true                # 开启
+  fake-ip-filter:                # fake-ip白名单，对于有需要返回真实IP又想用fake-ip的，可参照以下格式把域名加进去
+    - msftconnecttest.com
+    - "*.msftconnecttest.com"
+    - msftncsi.com
+    - "*.msftncsi.com"
+    - '.lan'
+    - localhost.ptlogin2.qq.com    
+    - '.srv.nintendo.net'   
+    - '.stun.playstation.net'   
+    - 'xbox.*.microsoft.com'    
+    - '.xboxlive.com'
+  nameserver:                    # DNS服务器（国内），此处建议只填一个速度最快的DNS就可以了
+    - 119.29.29.29
+    - 119.28.28.28
+    - 223.5.5.5
+    - 223.6.6.6
+    - 180.76.76.76
+    - 1.2.4.8
+
+# 以下就是代理，代理集（需机场支持），策略组设置。请自己观察，注意之间的对应关系!
+# 代理集设置    
+proxy-providers:
+  🇭🇰 香港:                   # 代理集名称
+    type: http                   # 代理集类型，有http（网络地址）跟file（本地）两种格式
+    path: ./🇭🇰 香港.yaml     # 代理集本地路径
+    url: https://dler.cloud/subscribe/$token?protocols=ss&list=clash&match=香港
+    interval: 28800             # 自动检测时间，单位为秒，意思就是每28800更新一次
+    health-check:                # 状态检测
+      enable: true               # 开启
+      url: http://cp.cloudflare.com/generate_204  # 检测地址，每600秒代理集里面的节点向检测地址做一次连通性测试
+      interval: 300              # 自动检测时间，单位为秒
+  🇰🇷 韩国:
+    type: http
+    path: ./🇰🇷 韩国.yaml
+    url: https://dler.cloud/subscribe/$token?protocols=ss&list=clash&match=韩国
+    interval: 28800
+    health-check:
+      enable: true
+      url: http://cp.cloudflare.com/generate_204
+      interval: 300
+  🇺🇸 美国:
+    type: http
+    path: ./🇺🇸 美国.yaml
+    url: https://dler.cloud/subscribe/$token?protocols=ss&list=clash&match=美国
+    interval: 28800
+    health-check:
+      enable: true
+      url: http://cp.cloudflare.com/generate_204
+      interval: 300 
+  🇯🇵 日本:
+    type: http
+    path: ./🇯🇵 日本.yaml
+    url: https://dler.cloud/subscribe/$token?protocols=ss&list=clash&match=日本
+    interval: 28800
+    health-check:
+      enable: true
+      url: http://cp.cloudflare.com/generate_204
+      interval: 300          
+  🇸🇬 新加坡:
+    type: http
+    path: ./🇸🇬 新加坡.yaml
+    url: https://dler.cloud/subscribe/$token?protocols=ss&list=clash&match=新加坡
+    interval: 28800
+    health-check:
+      enable: true
+      url: http://cp.cloudflare.com/generate_204
+      interval: 300   
+  🇨🇳 台湾:
+    type: http
+    path: ./🇨🇳 台湾.yaml
+    url: https://dler.cloud/subscribe/$token?protocols=ss&list=clash&match=台湾
+    interval: 28800
+    health-check:
+      enable: true
+      url: http://cp.cloudflare.com/generate_204
+      interval: 600          
+
+# 策略组
+proxy-groups:
+  - name: 📶 带宽测速
+    type: select
+    proxies:
+      - 📡 直连国内
+    use:  
+      - 🇭🇰 香港                      #引用（代理集文件）                          
+      - 🇰🇷 韩国
+      - 🇺🇸 美国
+      - 🇯🇵 日本 
+      - 🇸🇬 新加坡
+      - 🇨🇳 台湾
+  - name: 🌏 谷歌服务
+    type: select
+    proxies:
+      - 🇭🇰 香港                      #引用（代理集文件）
+      - 🇰🇷 韩国
+      - 🇺🇸 美国
+      - 🇯🇵 日本 
+      - 🇸🇬 新加坡
+      - 🇨🇳 台湾 
+      - 📡 直连国内    
+  - name: 💬 即时通讯
+    type: select
+    proxies:
+      - 🇺🇸 美国
+      - 🇭🇰 香港                      #引用（代理集文件）
+      - 🇰🇷 韩国
+      - 🇯🇵 日本 
+      - 🇸🇬 新加坡
+      - 🇨🇳 台湾 
+      - 📡 直连国内  
+  - name: 🎦 Netflix
+    type: select
+    proxies:
+      - 🇸🇬 新加坡
+      - 🇯🇵 日本
+      - 🇨🇳 台湾
+      - 🇭🇰 香港                      #引用（代理集文件）
+      - 🇰🇷 韩国
+      - 🇺🇸 美国
+      - 📡 直连国内  
+  - name: ▶️ Youtube
+    type: select
+    proxies:
+      - 🇭🇰 香港                      #引用（代理集文件）
+      - 🇰🇷 韩国
+      - 🇺🇸 美国
+      - 🇯🇵 日本
+      - 🇸🇬 新加坡
+      - 🇨🇳 台湾
+      - 📡 直连国内  
+  - name: 📺 港澳台区
+    type: select
+    proxies:
+      - 🇭🇰 香港                      #引用（代理集文件）
+      - 🇰🇷 韩国
+      - 🇺🇸 美国
+      - 🇯🇵 日本
+      - 🇸🇬 新加坡
+      - 🇨🇳 台湾
+      - 📡 直连国内  
+  - name: 🎞 Disney
+    type: select
+    proxies:
+      - 🇭🇰 香港                      #引用（代理集文件）
+      - 🇰🇷 韩国
+      - 🇺🇸 美国
+      - 🇯🇵 日本
+      - 🇸🇬 新加坡
+      - 🇨🇳 台湾
+      - 📡 直连国内  
+  - name: 🎞 国际媒体
+    type: select
+    proxies:
+      - 🇭🇰 香港                      #引用（代理集文件）
+      - 🇰🇷 韩国
+      - 🇺🇸 美国
+      - 🇯🇵 日本
+      - 🇸🇬 新加坡
+      - 🇨🇳 台湾
+      - 📡 直连国内  
+  - name: 🌍 国际互联
+    type: select
+    proxies:
+      - 🇭🇰 香港                      #引用（代理集文件）
+      - 🇰🇷 韩国
+      - 🇺🇸 美国
+      - 🇯🇵 日本
+      - 🇸🇬 新加坡
+      - 🇨🇳 台湾
+      - 📡 直连国内     
+  - name: 🎥 国内媒体
+    type: select
+    proxies:
+      - 📡 直连国内
+      - 🌍 国际互联
+  - name: 📧 微软服务
+    type: select
+    proxies:    
+      - 🌍 国际互联
+      - 📡 直连国内
+  - name: 📱 苹果服务
+    type: select
+    proxies: 
+      - 📡 直连国内
+      - 🌍 国际互联
+  - name: 🎮 游戏平台
+    type: select
+    proxies:
+      - 📡 直连国内    
+      - 🌍 国际互联
+  - name: ⛔️ 拦截广告
+    type: select
+    proxies:
+      - 🚫 拦截阻断
+      - 📡 直连国内
+  - name: 🐠 漏网之鱼
+    type: select
+    proxies:
+      - 🌍 国际互联
+      - 📡 直连国内    
+  - name: 🚫 拦截阻断
+    type: select
+    proxies:
+      - REJECT 
+  - name: 📡 直连国内
+    type: select
+    proxies:
+      - DIRECT
+#  - name: 🎮 游戏加速
+#    type: select
+#    use:   
+#      - 🇭🇰 香港                      #引用（代理集文件）
+#      - 🇰🇷 韩国
+#      - 🇺🇸 美国
+#      - 🇯🇵 日本 
+#      - 🇸🇬 新加坡
+#      - 🇨🇳 台湾
+#    proxies:
+#      - 📡 直连国内    
+  - name: 🤟 手动选择
+    type: select
+    use:
+      - 🇭🇰 香港                      #引用（代理集文件）
+      - 🇰🇷 韩国
+      - 🇺🇸 美国
+      - 🇯🇵 日本
+      - 🇸🇬 新加坡
+      - 🇨🇳 台湾
+  - name: 🇰🇷 韩国
+    type: url-test
+    use:
+      - 🇰🇷 韩国
+    url: http://cp.cloudflare.com/generate_204
+    tolerance: 10
+    interval: 300
+  - name: 🇭🇰 香港
+    type: url-test
+    use:
+      - 🇭🇰 香港
+    url: http://cp.cloudflare.com/generate_204
+    tolerance: 10
+    interval: 300
+  - name: 🇺🇸 美国
+    type: url-test
+    use:
+      - 🇺🇸 美国
+    url: http://cp.cloudflare.com/generate_204
+    tolerance: 10
+    interval: 300
+  - name: 🇯🇵 日本
+    type: url-test
+    use:
+      - 🇯🇵 日本
+    url: http://cp.cloudflare.com/generate_204
+    tolerance: 10
+    interval: 300   
+  - name: 🇨🇳 台湾
+    type: url-test
+    use:
+      - 🇨🇳 台湾
+    url: http://cp.cloudflare.com/generate_204
+    tolerance: 10
+    interval: 300     
+  - name: 🇸🇬 新加坡
+    type: url-test
+    use:
+      - 🇸🇬 新加坡
+    url: http://cp.cloudflare.com/generate_204
+    tolerance: 10
+    interval: 300       
+
+# clash有几种策略，url-test自动测速，select手动选择，select主备切换，loadbalance轮询均衡，relay中继模式，每个都有他的优劣
+# url-test自动测速: 自动测速，我用的最多，每隔一段时间，节点自动向测速点发起连接测速，然后自动选择一个延迟最低的，但这个不是本地到节点，而是节点到测速点.
+# select手动选择: 手动选择，顾名思义，手动，不会自动切换.
+# select主备切换: 主备切换，节点先发起测速，然后选择第一个可用的节点，一定时间内在测速，如果选择的节点挂了，就顺位换，不挂就继续用，但不考虑延迟.
+# loadbalance轮询均衡: 轮训均衡，跟负载均衡差不多，但没什么用.
+# relay中继模式: 中继模式，就是可以自定义多个节点的中继行为 
+
+#规则集
+rule-providers:
+## > 去广告
+  AdBlock1:                                   # 规则集文件名
+    type: http                                # 规则集文件类型（HTTP=在线下载；File=本地导入）
+    behavior: classical                       # 行为域
+    path: ./ruleset/广告拦截/AdBlock1.list     # 规则集在线下载保存地址或本地文件导入地址
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%e5%b9%bf%e5%91%8a%e6%8b%a6%e6%88%aa/AdBlock1.list  #规则集文件下载地址
+    interval: 43200                           # 规则集文件自动更新间隔
+  AdBlock2:
+    type: http
+    behavior: classical
+    path: ./ruleset/广告拦截/AdBlock2.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%e5%b9%bf%e5%91%8a%e6%8b%a6%e6%88%aa/AdBlock2.list
+    interval: 43200
+  AdBlock3:
+    type: http
+    behavior: classical
+    path: ./ruleset/广告拦截/AdBlock3.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%e5%b9%bf%e5%91%8a%e6%8b%a6%e6%88%aa/AdBlock3.list
+    interval: 43200
+  AdBlock4:
+    type: http
+    behavior: classical
+    path: ./ruleset/广告拦截/AdBlock4.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%B9%BF%E5%91%8A%E6%8B%A6%E6%88%AA/AdBlock4.list
+    interval: 43200
+  AdBlock5:
+    type: http
+    behavior: classical
+    path: ./ruleset/广告拦截/AdBlock5.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%e5%b9%bf%e5%91%8a%e6%8b%a6%e6%88%aa/AdBlock5.list
+    interval: 43200
+## > 媒体服务
+  # > 油管
+  YouTube:
+    type: http
+    behavior: classical
+    path: ./ruleset/媒体服务/YouTube.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/YouTube.list
+    interval: 43200
+  # > 奈飞
+  Netflix:
+    type: http
+    behavior: classical
+    path: ./ruleset/媒体服务/Netflix.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/Netflix.list
+    interval: 43200
+  # > 迪士尼+
+  Disney:
+    type: http
+    behavior: classical
+    path: ./ruleset/媒体服务/Disney.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/Disney.list
+    interval: 43200
+  # > HBO
+  HBO:
+    type: http
+    behavior: classical
+    path: ./ruleset/媒体服务/HBO.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/HBO.list
+    interval: 43200
+  # > 港澳台媒体
+  HMTmedia:
+    type: http
+    behavior: classical
+    path: ./ruleset/媒体服务/HMTmedia.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/HMTmedia.list
+    interval: 43200
+  # > 油管音乐   
+  YoutubeMusic:
+    type: http
+    behavior: classical
+    path: ./ruleset/媒体服务/YoutubeMusic.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/YoutubeMusic.list
+    interval: 43200
+  # > Apple TV
+  AppleTV:
+    type: http
+    behavior: classical
+    path: ./ruleset/媒体服务/AppleTV.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%e5%aa%92%e4%bd%93%e6%9c%8d%e5%8a%a1/AppleTV.list
+    interval: 43200
+  # > 其余国际流媒体
+  GlobalMedia:
+    type: http
+    behavior: classical
+    path: ./ruleset/媒体服务/GlobalMedia.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/GlobalMedia.list
+    interval: 43200
+  # > 国内流媒体
+  Chinesemedia:
+    type: http
+    behavior: classical
+    path: ./ruleset/媒体服务/Chinesemedia.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/Chinesemedia.list
+    interval: 43200
+  # 网易云
+  wyy:
+    type: http
+    behavior: classical
+    path: ./ruleset/媒体服务/wyy.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/wyy.list
+    interval: 43200    
+## > 网络服务
+  # > 苹果服务
+  # 苹果API
+  AppleAPI:
+    type: http
+    behavior: classical
+    path: ./ruleset/网络服务/AppleAPI.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%e7%bd%91%e7%bb%9c%e6%9c%8d%e5%8a%a1/AppleAPI.list
+    interval: 43200
+  # 苹果CDN
+  AppleCDN:
+    type: http
+    behavior: classical
+    path: ./ruleset/网络服务/AppleCDN.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/AppleCDN.list
+    interval: 43200
+  # 谷歌服务
+  Google:
+    type: http
+    behavior: classical
+    path: ./ruleset/网络服务/Google.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%e7%bd%91%e7%bb%9c%e6%9c%8d%e5%8a%a1/Google.list
+    interval: 43200
+  # > 谷歌CDN
+  GoogleCDN:
+    type: http
+    behavior: classical
+    path: ./ruleset/网络服务/GoogleCDN.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%e7%bd%91%e7%bb%9c%e6%9c%8d%e5%8a%a1/GoogleCDN.list
+    interval: 43200
+  # 微软服务
+  Microsoft:
+    type: http
+    behavior: classical
+    path: ./ruleset/网络服务/Microsoft.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/Microsoft.list
+    interval: 43200
+  # > 微软CDN
+  MicrosoftCDN:
+    type: http
+    behavior: classical
+    path: ./ruleset/网络服务/MicrosoftCDN.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/MicrosoftCDN.list
+    interval: 43200
+  # 数字货币
+  Digital:
+    type: http
+    behavior: classical
+    path: ./ruleset/网络服务/Digital.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/Digital.list
+    interval: 43200    
+  # Paypal
+  Paypal:
+    type: http
+    behavior: classical
+    path: ./ruleset/网络服务/Paypal.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/Paypal.list
+    interval: 43200
+  # Speedtest
+  Speedtest:
+    type: http
+    behavior: classical
+    path: ./ruleset/网络服务/Speedtest.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/Speedtest.list
+    interval: 43200
+  # 即时通讯（TG,KAKAO,LINE....)
+  Telegram:
+    type: http
+    behavior: classical
+    path: ./ruleset/网络服务/Telegram.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/Telegram.list
+    interval: 43200
+  # 游戏平台（Steam,xbox,PS,战网）
+  gameline:
+    type: http
+    behavior: classical
+    path: ./ruleset/网络服务/gameline.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/gameline.list
+    interval: 43200
+  # > 回国线路 
+  Domestic:
+    type: http
+    behavior: classical
+    path: ./ruleset/网络服务/Domestic.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/Domestic.list
+    interval: 43200
+  Lan:
+    type: http
+    behavior: classical
+    path: ./ruleset/网络服务/Lan.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/Lan.list
+    interval: 43200
+  # > 国际互联
+  Proxy:
+    type: http
+    behavior: classical
+    path: ./ruleset/网络服务/Proxy.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%e7%bd%91%e7%bb%9c%e6%9c%8d%e5%8a%a1/Proxy.list
+    interval: 43200
+## > 黑白名单
+  # > 黑名单
+  Black:
+    type: http
+    behavior: classical
+    path: ./ruleset/黑白名单/Black.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E9%BB%91%E7%99%BD%E5%90%8D%E5%8D%95/Black.list
+    interval: 43200
+  # > 白名单
+  White:
+    type: http
+    behavior: classical
+    path: ./ruleset/黑白名单/White.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E9%BB%91%E7%99%BD%E5%90%8D%E5%8D%95/White.list
+    interval: 43200
+
+# Script匹配模式
+script:
+
+    code: |
+    
+        def main(ctx, metadata):
+        ## >> 自定义变量
+
+            # 游戏主机策略               
+            #SrcIP = ctx.resolve_ip(metadata["src_ip"])
+            #if SrcIP == "10.10.10.14":
+                #if metadata["network"] == "udp":
+                    #ctx.log('[Script] matched SrcIP')
+                    #return "🎮 游戏加速"
+                #return "🌍 国际互联"
+                
+            # 广告拦截策略
+            ad_action = {
+                "Speedtest": "📶 带宽测速",
+                "AdBlock1": "⛔️ 拦截广告",
+                "AdBlock2": "⛔️ 拦截广告",
+                "AdBlock3": "⛔️ 拦截广告",
+                "AdBlock4": "⛔️ 拦截广告",
+                "AdBlock5": "⛔️ 拦截广告"
+                }
+            ad_rule = ["Speedtest","AdBlock1", "AdBlock2", "AdBlock3", "AdBlock4", "AdBlock5"]
+            for ad_name in ad_rule:
+                if ctx.rule_providers[ad_name].match(metadata):
+                    ctx.log('[Script] matched %s' % ad_name)
+                    return ad_action[ad_name]
+                    
+            # Plex策略
+            #plex_direct = ["+.plex.direct"]
+            #plex_tv = ["+.plex.tv"]
+            #for hostname in plex_direct:
+                #if hostname in metadata["host"]:
+                    #ctx.log('[Script] matched %s' % hostname)
+                    #return "🏘回家"
+            #for hostname in plex_tv:
+                #if hostname in metadata["host"]:
+                    #ctx.log('[Script] matched %s' % hostname)
+                    #return "🌍 国际互联"
+          
+            # 定义规则集与策略组
+            ruleset_action = {
+                "Lan": "📡 直连国内",
+                "White": "📡 直连国内",
+                "Black": "🌍 国际互联",
+                "Telegram": "💬 即时通讯",
+                "YouTube": "▶️ Youtube",
+                "Netflix": "🎦 Netflix",
+                "HMTmedia": "📺 港澳台区",
+                "Disney": "🎞 Disney",
+                "YoutubeMusic": "🎞 国际媒体",
+                "HBO": "🎞 国际媒体",
+                "AppleTV": "🎞 国际媒体",
+                "GlobalMedia": "🎞 国际媒体", 
+                "gameline": "🎮 游戏平台",               
+                "Digital": "🌍 国际互联",
+                "Paypal": "🌍 国际互联",
+                "Proxy": "🌍 国际互联",
+                "wyy": "🎥 国内媒体",
+                "Chinesemedia": "🎥 国内媒体",
+                "AppleAPI": "📱 苹果服务",
+                "Google": "🌏 谷歌服务",
+                "GoogleCDN": "🌏 谷歌服务",
+                "Microsoft": "📧 微软服务",
+                "AppleCDN": "📡 直连国内",                  
+                "MicrosoftCDN": "📡 直连国内",            
+                "Domestic": "📡 直连国内"
+                }
+            name_rule = ["Lan","White","Black","Telegram","YouTube","Netflix","HMTmedia","Disney","YoutubeMusic","HBO","AppleTV","GlobalMedia","gameline","Google","Digital","Paypal","Proxy","wyy","Chinesemedia","AppleAPI","GoogleCDN","Microsoft","AppleCDN","MicrosoftCDN","Domestic"]
+
+            # 策略组规则
+            for rule_name in name_rule:
+                if ctx.rule_providers[rule_name].match(metadata):
+                    ctx.log('[Script] matched %s' % rule_name)
+                    return ruleset_action[rule_name]              
+
+            # 漏网之鱼
+            return "🐠 漏网之鱼"
+EOF
+}
+
+
+mosdns_config() {
+cat << EOF > /srv/mosdns/config.yaml
+################# 日志 ################
+log:
+  level: info           
+  file: /tmp/mosdns.log    
+
+  ################# 必要插件 ################
+plugin:
+  - tag: main_server                
+    type: server                    
+    args:                           
+      entry: main_sequence         
+      max_concurrent_queries: 0     
+      server:                       
+        - protocol: udp             
+          addr: 0.0.0.0:53          
+          timeout: 5                
+        - protocol: tcp
+          addr: 0.0.0.0:53
+          timeout: 5
+          idle_timeout: 10          
+
+################# 可执行插件 ################
+
+  - tag: main_sequence      
+    type: sequence          
+    args:                           
+      exec:   
+        - hosts
+        - if:
+            - adblock_list               
+          exec:       
+            - _block_with_empty_response              
+            - _end
+        - if:
+            - black_list                 
+          exec:       
+            - forward_clash              
+            - _end 
+        - forward_clash
+        - if:
+            - white_list
+            - direct_list           
+          exec:
+            - forward_direct         
+            - _end
+
+################ 解析服务器插件 #################
+
+##### 解析直连域名的插件，direct #####
+  - tag: forward_direct
+    type: fast_forward                   
+    args:    
+      upstream:     
+        - addr: 119.29.29.29
+          trusted: true
+          idle_timeout: 30
+          max_conns: 5
+        - addr: 223.6.6.6
+          trusted: true
+          idle_timeout: 30
+          max_conns: 5
+        - addr: 114.114.114.114
+          trusted: true
+          idle_timeout: 30
+          max_conns: 5          
+      timeout: 2
+ 
+##### 解析代理域名的插件，clash #####
+  - tag: forward_clash
+    type: fast_forward
+    args:
+      upstream:
+          addr: 127.0.0.1:5352
+          trusted: true
+################ 匹配器插件 #################
+
+##### 匹配广告域名的插件 #####
+  - tag: adblock_list
+    type: query_matcher
+    args:
+      domain:
+         - ext:./ad/adblock.china.list
+         - ext:./ad/adblock.global.list
+         - ext:./ad/adblock.list     
+         - ext:./geosite.dat:category-ads-all
+
+##### 匹配黑名单的插件 #####
+  - tag: black_list                   
+    type: query_matcher
+    args:
+      domain:
+        - ext:./global/black.list
+        - ext:./global/proxy.list
+        - ext:./geosite.dat:google
+        - ext:./geosite.dat:geolocation-!cn
+
+##### 匹配白名单的插件 #####        
+  - tag: white_list                   
+    type: query_matcher
+    args:
+      domain:
+        - ext:./china/white.list
+        - ext:./geosite.dat:apple-cn
+        
+##### 匹配直连域名/IP的插件 #####
+  - tag: direct_list                  
+    type: query_matcher
+    args:
+      domain:
+        - ext:./geosite.dat:cn
+      client_ip:   
+        - ext:./geoip.dat:cn     
+        
+##### 匹配hosts的插件 #####
+  - tag: hosts
+    type: hosts
+    args:
+      hosts:               
+        - ext:./hosts/hosts.list 
+        
+include: [ ]
+
+EOF
+}
+
+
+config_base() { 
+echo -e "${green}优化系统,请稍候!${end}" 
+# 优化内核参数
+cat << EOF > /etc/sysctl.conf
+# 开启转发
+net.ipv4.ip_forward = 1
+# 优化参数
+fs.file-max = 1024000
+fs.nr_open = 1048576
+kernel.msgmni = 4096
+kernel.msgmax = 65536
+kernel.msgmnb = 65536
+kernel.shmmni = 1024
+kernel.shmmax = 4294967296
+kernel.shmall = 2097152
+net.core.netdev_max_backlog = 262144
+net.core.somaxconn = 262144
+net.ipv4.tcp_max_syn_backlog = 262144
+net.core.rmem_default = 4194304
+net.core.wmem_default = 4194304
+net.core.rmem_max = 12582912
+net.core.wmem_max = 12582912
+net.core.optmem_max = 81920
+net.ipv4.tcp_mem = 65536 262144 8388608
+net.ipv4.tcp_rmem = 10240 87380 12582912
+net.ipv4.tcp_wmem = 10240 87380 12582912
+net.ipv4.tcp_max_tw_buckets = 5000
+net.ipv4.tcp_fin_timeout = 10
+net.ipv4.tcp_keepalive_time = 1200
+net.ipv4.tcp_keepalive_probes = 5
+net.ipv4.tcp_keepalive_intvl = 15
+net.ipv4.tcp_syn_retries = 3
+net.ipv4.tcp_retries1 = 3
+net.ipv4.tcp_mtu_probing = 1
+net.ipv4.tcp_base_mss = 1452
+net.ipv4.tcp_fack = 1
+net.ipv4.tcp_low_latency = 0
+net.ipv4.tcp_no_metrics_save = 1
+net.ipv4.tcp_sack = 1
+net.ipv4.tcp_syncookies = 1
+net.ipv4.tcp_timestamps = 1
+net.ipv4.tcp_tw_reuse = 1
+net.ipv4.tcp_window_scaling = 1
+net.ipv4.tcp_notsent_lowat = 16384
+net.ipv4.ip_local_port_range = 10000 65535
+net.ipv4.ip_local_reserved_ports = 7892
+net.ipv4.tcp_fastopen = 3
+net.ipv4.ip_default_ttl = 128
+net.ipv4.udp_mem = 65536 262144 8388608
+net.ipv4.udp_rmem_min = 65535
+net.ipv4.udp_wmem_min = 65535
+net.ipv4.route.flush = 1
+# 禁用ipv6
+net.ipv6.conf.all.disable_ipv6 = 1
+net.ipv6.conf.default.disable_ipv6 = 1
+net.ipv6.conf.lo.disable_ipv6 = 1
+# 开启ECN加速
+net.ipv4.tcp_ecn = 1
+net.ipv4.tcp_ecn_fallback = 1
+EOF
+
+echo 'net.core.default_qdisc = fq_pie' | sudo tee /etc/sysctl.d/90-override.conf >> /dev/null 2>&1
+
+sysctl -p >> /dev/null 2>&1
+
+cat << EOF > /etc/security/limits.d/98-nofile.conf
+# add lines to it
+*     soft     nofile     524288
+*     hard     nofile     524288
+root  soft     nofile     524288
+root  hard     nofile     524288
+EOF
+
+#echo 'ListenAddress 0.0.0.0'>>/etc/ssh/sshd_config
+#echo 'AddressFamily inet'>>/etc/ssh/sshd_config
+
+#service sshd restart
+
+echo 'DNSStubListener=no'>>/etc/systemd/resolved.conf
+
+}
+
+
+config_ip_dns(){
+echo -e "${green}配置ip信息,请稍候!${end}" 
+rm -rf /etc/resolv.conf
+cat << EOF > /etc/resolv.conf
+nameserver $ip_dns
+EOF
+
+cat << EOF > /etc/network/interfaces
+source /etc/network/interfaces.d/*
+auto lo
+iface lo inet loopback
+auto $eth_n
+iface $eth_n inet static
+  address $ip_add
+  netmask $ip_mask
+  gateway $ip_gw
+  dns-nameservers $ip_dns
+  mtu 1492
+  mss 1452
+EOF
+}
+
+getcpucore(){
+	cputype=$(uname -ms | tr ' ' '_' | tr '[A-Z]' '[a-z]')
+  [ -n "$(echo $cputype | grep -E "linux.*armv7.*")" ] && [ -n "$(cat /proc/cpuinfo | grep vfp)" ] && cpucore="armv7"
+	[ -n "$(echo $cputype | grep -E "linux.*aarch64.*|linux.*armv8.*")" ] && cpucore="armv8"
+	[ -n "$(echo $cputype | grep -E "linux.*86_64.*")" ] && cpucore="amd64"
+}
+
+getcpucore2(){
+	cputype2=$(uname -ms | tr ' ' '_' | tr '[A-Z]' '[a-z]')
+  [ -n "$(echo $cputype2 | grep -E "linux.*armv7.*")" ] && [ -n "$(cat /proc/cpuinfo | grep vfp)" ] && cpucore2="armv7"
+	[ -n "$(echo $cputype2 | grep -E "linux.*aarch64.*|linux.*armv8.*")" ] && cpucore2="arm64"
+	[ -n "$(echo $cputype2 | grep -E "linux.*86_64.*")" ] && cpucore2="amd64"
+}
+
+
+
+install_debian() {
+
+
+rm -rf /etc/apt/sources.list.d/*
+
+cat << EOF > /etc/apt/sources.list
+deb http://mirrors.aliyun.com/debian $(cat /etc/os-release | grep VERSION= | cut -d '(' -f2 | cut -d ')' -f1) main
+deb http://mirrors.aliyun.com/debian-security $(cat /etc/os-release | grep VERSION= | cut -d '(' -f2 | cut -d ')' -f1)/updates main
+deb http://mirrors.aliyun.com/debian $(cat /etc/os-release | grep VERSION= | cut -d '(' -f2 | cut -d ')' -f1)-updates main
+EOF
+echo -e "${green}升级系统,请稍候! 大概5-10分钟!${end}" 
+apt update >> /dev/null 2>&1
+apt -y full-upgrade >> /dev/null 2>&1
+apt -y autoclean >> /dev/null 2>&1 
+echo -e "${green}系统升级完成!${end}"
+
+
+echo -e "${green}安装软件,请稍候! 大概5-10分钟!${end}"     
+apt -y install htop sudo strace supervisor curl wget unzip nftables ntpdate net-tools gawk >> /dev/null 2>&1
+rm /etc/localtime
+ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+ntpdate cn.pool.ntp.org >> /dev/null 2>&1
+chown -R root /srv/ >> /dev/null 2>&1
+echo -e "${green}软件安装完成!${end}"
+
+}
+
+install_clash() {
+    new_clash_ver=$( wget -qO- ${url}version | grep clash_v | awk '{print $2}')
+    if [[ ! -n "$new_clash_ver" ]]; then
+    echo -e "${red}Clash检测版本失败!${end}"
+    exit 1
+    fi      
+    if [ ! -d "/tmp/clash" ]; then
+    mkdir /tmp/clash
+    fi 
+    webget2 /tmp/clash/clash.gz "$url_cdn/https://github.com/Dreamacro/clash/releases/download/premium/clash-linux-${cpucore}-${new_clash_ver}.gz"
+
+     if [[ $? -ne 0 ]]; then
+     echo -e "${red}Clash下载失败!${end}"
+     exit 1
+     fi
+     echo -e "${green}Clash下载成功!${end}" 
+     rm -rf /usr/bin/clash
+     gunzip /tmp/clash/clash.gz
+     mv /tmp/clash/clash /usr/bin/clash
+     chmod +x /usr/bin/clash
+     setcap cap_net_bind_service=+ep /usr/bin/clash
+	   webget2  /tmp/ui.tar.gz  ${url}clash/ui.tar.gz >> /dev/null 2>&1
+     if [[ $? -ne 0 ]]; then
+     echo -e "${red}UI下载失败!${end}"
+     exit 1
+     fi
+     echo -e "${green}UI下载成功!${end}" 
+	   if [ ! -d "/srv/clash" ]; then
+     mkdir /srv/clash
+     fi 
+	   tar zxvf /tmp/ui.tar.gz  -C /srv/clash/ >> /dev/null 2>&1
+     rm -rf /tmp/ui.tar.gz
+	   supervisor_clash_config
+	   supervisorctl update >> /dev/null 2>&1
+     supervisorctl restart clash >> /dev/null 2>&1
+     echo -e "${green}Clash安装成功!${end}"
+     echo -e "${green}Clash初始化!${end}" &&sleep 30
+}
+
+update_clash_y() {
+	      new_clash_ver=$( wget -qO- ${url}version | grep clash_v | awk '{print $2}')
+        if [[ ! -n "$new_clash_ver" ]]; then
+        echo -e "${red}Clash检测版本失败!${end}"
+        exit 1
+        fi  
+	      if [ ! -d "/tmp/clash" ]; then
+        mkdir /tmp/clash
+        fi            
+        webget2 /tmp/clash/clash.gz "$url_cdn/https://github.com/Dreamacro/clash/releases/download/premium/clash-linux-${cpucore}-${new_clash_ver}.gz"
+        if [[ $? -ne 0 ]]; then
+        echo -e "${red}Clash下载失败!${end}"
+        exit 1
+        fi
+        echo -e "${green}Clash下载成功!${end}" 
+        rm -rf /usr/bin/clash
+        gunzip /tmp/clash/clash.gz
+        mv /tmp/clash/clash /usr/bin/clash
+        chmod +x /usr/bin/clash
+        rm -rf /tmp/clash
+        supervisorctl restart clash >> /dev/null 2>&1
+        echo -e "${green}升级Clash成功，请重新运行脚本!${end}" && exit 0
+
+}
+
+update_clash() {
+	   new_clash_ver=$( wget -qO- ${url}version | grep clash_v | awk '{print $2}')
+     now_clash_ver=$(clash -v | awk '{print $2}')
+	   if [[ "${now_clash_ver}" != "${new_clash_ver}" ]]  ;then
+	     echo -e "Clash已有新版本: ${new_clash_ver}，当前版本:${now_clash_ver}，开始安装"
+        if [[ ! -n "$new_clash_ver" ]]; then
+        echo -e "${red}Clash检测版本失败!${end}"
+        exit 1
+        fi
+        if [ ! -d "/tmp/clash" ]; then
+        mkdir /tmp/clash
+        fi 
+        webget2 /tmp/clash/clash.gz "$url_cdn/https://github.com/Dreamacro/clash/releases/download/premium/clash-linux-${cpucore}-${new_clash_ver}.gz"
+        if [[ $? -ne 0 ]]; then
+        echo -e "${red}Clash下载失败!${end}"
+        exit 1
+        fi
+        echo -e "${green}Clash下载成功!${end}" 
+        rm -rf /usr/bin/clash
+        gunzip /tmp/clash/clash.gz
+        mv /tmp/clash/clash /usr/bin/clash
+        chmod +x /usr/bin/clash
+        supervisorctl restart clash >> /dev/null 2>&1
+        echo -e "${green}Clash升级成功，请重新运行脚本!${end}" && exit 0
+        fi
+}
+
+install_mosdns() {
+    new_mosdns_ver=$(wget -qO- ${url}version | grep mosdns_v | awk '{print $2}')
+    if [[ ! -n "$new_mosdns_ver" ]]; then
+    echo -e "${red}Mosdns检测版本失败!${end}"
+    exit 1
+    fi
+    if [ ! -d "/tmp/mosdns" ]; then
+     mkdir /tmp/mosdns
+     fi 
+     webget2   /tmp/mosdns/mosdns.tar.gz ${url}mosdns/mosdns.tar.gz  >> /dev/null 2>&1
+     if [[ $? -ne 0 ]]; then
+     echo -e "${red}Mosdns配置下载失败!${end}"
+     exit 1
+     fi
+     echo -e "${green}Mosdns配置下载成功!${end}" 
+     cd /tmp/mosdns
+     tar zxvf mosdns.tar.gz  >> /dev/null 2>&1
+     if [ ! -d "/srv/mosdns" ]; then
+     mkdir /srv/mosdns
+     fi 
+     mv /tmp/mosdns/mosdns /srv/
+     webget2  /tmp/mosdns/mosdns.zip "$url_cdn/https://github.com/IrineSistiana/mosdns/releases/download/${new_mosdns_ver}/mosdns-linux-${cpucore2}.zip"
+     if [[ $? -ne 0 ]]; then
+     echo -e "${red}Mosdns下载失败!${end}"
+     exit 1
+     fi
+     echo -e "${green}Mosdns下载成功!${end}" 
+     cd /tmp/mosdns
+     rm -rf /usr/bin/mosdns
+     unzip /tmp/mosdns/mosdns.zip  >> /dev/null 2>&1
+	   mv mosdns /usr/bin/mosdns
+     chmod 777 /usr/bin/mosdns
+     rm -rf /tmp/mosdns
+	   supervisor_mosdns_config
+	   mosdns_config
+	   supervisorctl update >> /dev/null 2>&1
+     supervisorctl restart mosdns >> /dev/null 2>&1
+     echo -e "${green}Mosdns安装成功!${end}"
+}
+
+
+
+
+update_mosdns_y() {
+        new_mosdns_ver=$(wget -qO- ${url}version | grep mosdns_v | awk '{print $2}')
+        if [[ ! -n "$new_mosdns_ver" ]]; then
+        echo -e "${red}Mosdns检测版本失败!${end}"
+        exit 1
+        fi
+        if [ ! -d "/tmp/mosdns" ]; then
+        mkdir /tmp/mosdns
+        fi         
+        webget2  /tmp/mosdns/mosdns.zip "$url_cdn/https://github.com/IrineSistiana/mosdns/releases/download/${new_mosdns_ver}/mosdns-linux-${cpucore2}.zip"
+        if [[ $? -ne 0 ]]; then
+        echo -e "${red}Mosdns下载失败!${end}"
+        exit 1
+        fi
+        echo -e "${green}Mosdns下载成功!${end}" 
+        cd /tmp/mosdns
+        rm -rf /usr/bin/mosdns
+        rm -rf /srv/mosdns/config.yaml
+        mosdns_config
+        unzip /tmp/mosdns/mosdns.zip  >> /dev/null 2>&1
+        mv mosdns /usr/bin/mosdns
+        chmod 777 /usr/bin/mosdns
+        rm -rf /tmp/mosdns
+        supervisorctl restart mosdns >> /dev/null 2>&1
+        echo -e "${green}Mosdns升级成功，请重新运行脚本!${end}" && exit 0
+
+}
+
+
+update_mosdns() {
+        new_mosdns_ver=$(wget -qO- ${url}version | grep mosdns_v | awk '{print $2}')
+        now_mosdns_ver=$(mosdns -v | awk '{print $1}'| cut -d'-' -f1)
+	      if [[ "${now_mosdns_ver}" != "${new_mosdns_ver}" ]]  ;then
+	      echo -e "Mosdns已有新版本: ${new_mosdns_ver}，当前版本:${now_mosdns_ver}，开始安装"
+        if [[ ! -n "$new_mosdns_ver" ]]; then
+        echo -e "${red}Mosdns检测版本失败!${end}"
+        exit 1
+        fi
+        if [ ! -d "/tmp/mosdns" ]; then
+        mkdir /tmp/mosdns
+        fi         
+        webget2  /tmp/mosdns/mosdns.zip "$url_cdn/https://github.com/IrineSistiana/mosdns/releases/download/${new_mosdns_ver}/mosdns-linux-${cpucore2}.zip"
+	      #[ "$result" != "200" ] && echo "文件下载失败！" && exit 1
+        if [[ $? -ne 0 ]]; then
+        echo -e "${red}Mosdns下载失败!${end}"
+        exit 1
+        fi
+        echo -e "${green}Mosdns下载成功!${end}" 
+        cd /tmp/mosdns
+        rm -rf /usr/bin/mosdns
+        rm -rf /srv/mosdns/config.yaml
+        mosdns_config
+        unzip /tmp/mosdns/mosdns.zip  >> /dev/null 2>&1
+        mv /tmp/mosdns/mosdns /usr/bin/mosdns
+        chmod 777 /usr/bin/mosdns
+        rm -rf /tmp/mosdns
+        supervisorctl restart mosdns >> /dev/null 2>&1
+        echo -e "${green}Mosdns升级成功，请重新运行脚本!${end}" && exit 0
+        fi
+
+}
+
+update_shell_y() {
+ 	      new_shell_ver=$(wget -qO- ${url}version | grep version | awk '{print $2}')
+        webget2  /tmp/clash_ui  ${url}clash_ui
+        if [[ $? -ne 0 ]]; then
+        echo -e "${red}Clash_UI下载失败!${end}"
+        exit 1
+        fi
+        echo -e "`date +%F\ %T` Clash_UI v${new_shell_ver} 下载成功!" >> /tmp/update.log  2>&1
+        rm -rf /usr/bin/clash_ui   
+        mv /tmp/clash_ui /usr/bin/clash_ui  >> /dev/null 2>&1
+        chmod +x /usr/bin/clash_ui >> /dev/null 2>&1
+        echo -e "${green}Clash_UI v${new_shell_ver}强制升级成功，请重新运行脚本!${end}" && exit 0
+}
+
+update_shell() {
+        sed -i  s/'clash_ui restart'/'clash_ui check_ver'/g  /var/spool/cron/crontabs/root
+	      new_shell_ver=$(wget -qO- ${url}version | grep version | awk '{print $2}')
+	      if [[ "${sh_ver}" != "${new_shell_ver}" ]]  ;then
+	      echo -e "`date +%F\ %T` Clash_UI  最新版本: ${new_shell_ver}，当前版本:${sh_ver}"
+        webget2 /tmp/clash_ui ${url}clash_ui
+        if [[ $? -ne 0 ]]; then
+        echo -e "${red}Clash_UI下载失败!${end}"
+        exit 1
+        fi
+        echo -e "`date +%F\ %T` Clash_UI v${new_shell_ver} 下载成功!" >> /tmp/update.log  2>&1
+        rm -rf /usr/bin/clash_ui   
+        mv /tmp/clash_ui /usr/bin/clash_ui  >> /dev/null 2>&1
+        chmod +x /usr/bin/clash_ui >> /dev/null 2>&1
+        echo -e "${green}Clash_UI v${new_shell_ver}升级成功，请重新运行脚本!${end}" && exit 0
+        fi
+}
+
+install_nftables() {
+     if [ ! -d "/tmp/nftables" ]; then
+        mkdir /tmp/nftables
+     fi
+     mkdir -p /etc/nftables
+     webget2 /tmp/nftables/nftables.zip  ${url}nftables/nftables.zip >> /dev/null 2>&1
+     if [[ $? -ne 0 ]]; then
+     echo -e "${red}Nftables下载失败!${end}"
+     exit 1
+     fi
+     echo -e "${green}Nftables下载成功!${end}" 
+     cd /tmp/nftables
+     unzip nftables.zip >> /dev/null 2>&1
+     mv /tmp/nftables/nftables/chnroute.nft /etc/nftables/chnroute.nft
+     mv /tmp/nftables/nftables/private.nft /etc/nftables/private.nft
+     mv /tmp/nftables/nftables/nftables.conf /etc/nftables.conf
+	   ip route replace default dev utun table 114  >> /dev/null 2>&1
+	   ip rule del fwmark 114514 lookup 114  >> /dev/null 2>&1
+	   ip rule add fwmark 114514 lookup 114 >> /dev/null 2>&1
+	   sudo sh -c "nft flush ruleset && nft -f /etc/nftables.conf" >> /dev/null 2>&1
+	   systemctl enable nftables.service >> /dev/null 2>&1
+ 	   systemctl start nftables.service >> /dev/null 2>&1
+ 	   rm -rf /tmp/nftables
+ 	   echo -e "${green}Nftables安装成功!${end}"
+}
+
+
+install_cron() {
+cat << EOF > /var/spool/cron/crontabs/root
+*/5 * * * * clash_ui ping
+*/60 * * * * clash_ui update
+0 5 * * * clash_ui check_ver
+EOF
+chmod 777 /var/spool/cron/crontabs/root
+crontab /var/spool/cron/crontabs/root
+/etc/init.d/cron restart  >> /dev/null 2>&1
+}
+
+
+#sed -i '$a\0 6 * * * clash_ui restart' /var/spool/cron/crontabs/root
+#sed -i  s/'clash_ui restart'/'clash_ui check_ver'/g  /var/spool/cron/crontabs/root
+
+check_clash_ver() {
+
+       new_clash_ver=$(wget -qO- https://api.github.com/repos/Dreamacro/clash/releases | grep '"name": "Premium' | sed -E 's/.*"Premium ([^"]+)".*/\1/')
+   	   #new_clash_ver=$( wget -qO- ${url}version | grep clash_v | awk '{print $2}')
+       now_clash_ver=$(clash -v | awk '{print $2}')
+       if [ ! -d "/srv/version" ]; then
+       cat << EOF > /srv/version
+clash_v 
+mosdns_v 
+EOF
+       fi  
+       sed -i  's/'clash_v'/'"clash_v ${new_clash_ver}"'/g'  /srv/version
+
+}
+
+check_mosdns_ver() {
+       new_mosdns_ver=$(wget -qO- https://api.github.com/repos/IrineSistiana/mosdns/releases | grep '"tag_name": ' | sed -E 's/.*"([^"]+)".*/\1/' | head -n 1)
+       #new_mosdns_ver=$(wget -qO- ${url}version | grep mosdns_v | awk '{print $2}')
+       now_mosdns_ver=$(mosdns -v | awk '{print $1}'| cut -d'-' -f1)
+       sed -i  's/'mosdns_v'/'"mosdns_v ${new_mosdns_ver}"'/g'  /srv/version
+
+}
+
+check_ver() {
+update_shell  
+check_clash_ver
+check_mosdns_ver
+update_clash
+update_mosdns
+}
+
+update_kernel() {
+       if [ ! -d "/tmp/deb" ]; then
+       mkdir /tmp/deb
+       fi
+       echo -e "${green}Debian内核开始下载!${end}" 
+       webget2 /tmp/deb/debian.tar.gz ${url}debian/debian.tar.gz  >> /dev/null 2>&1
+       if [[ $? -ne 0 ]]; then
+       echo -e "${red}Debian内核下载失败!${end}"
+       exit 1
+       fi
+       echo -e "${green}Debian内核下载成功!${end}" 
+  	   cd /tmp/deb
+       tar zxvf debian.tar.gz >> /dev/null 2>&1
+  	   echo -e "${green}Debian开始升级内核!${end}"
+  	   sudo dpkg -i linux-image-*xanmod*.deb linux-headers-*xanmod*.deb linux-libc* intel* iucode* >> /dev/null 2>&1
+  	   update-grub >> /dev/null 2>&1
+	     rm -rf /tmp/deb
+       echo -e "${green}Debian升级内核成功!${end}"
+}
+
+
+
+check_clash_status2() {
+pIDa=`lsof -i :9090|grep -v "PID" | awk '{print $2}'`
+if [ "$pIDa" = "" ];then
+   return 1
+else
+   return 0
+fi
+
+}
+check_ping_status() {
+ping -q -c5 ${gateway} >> /dev/null 2>&1
+if [ $? -eq 0 ];then
+   return 0
+else
+   return 1
+fi
+}
+
+ping_service() {
+check_clash_status2
+if [ $? -eq 0 ];then
+echo `date +%F\ %T`  "检测Clash端口正常" >> /dev/null 2>&1
+else
+echo `date +%F\ %T`  "检测Clash端口不正常，正在重启服务!" >>/tmp/ping.log
+clash_ui restart
+fi
+check_ping_status
+if [ $? -eq 0 ];then
+echo `date +%F\ %T`  "测试${gateway}网关正常" >> /dev/null 2>&1
+else
+echo `date +%F\ %T`  "测试${gateway}网关不正常，正在重启网络服务!" >>/tmp/ping.log
+/etc/init.d/networking restart
+clash_ui restart
+fi
+}
+
+
+
+dler_config() {
+		read -e -p "是否使用dler订阅? [Y/n] :" yn
+		[[ -z "${yn}" ]] && yn="y"
+		if [[ $yn == [Yy] ]]; then
+			read -e -p "请输入dler订阅TOKEN:" token
+		fi
+    if [ ! "$token" ];then
+    if [ ! -d "/srv/clash" ]; then
+       mkdir /srv/clash
+    fi    
+    mv /root/config.yaml /srv/clash/config.yaml     
+    else
+    dler_clash_config
+    fi    
+}
+
+
+
+update_config () {
+    update_clash_config
+    update_mosdns_config
+    }
+
+update_clash_config () {
+    update_shell
+ 		echo -e "${green}更新clash配置!${end}"	 
+    mv /srv/clash/config.yaml /tmp/clash_config.yaml.`date "+%Y.%m.%d.%H:%M"`
+    rm -rf /srv/clash/*.yaml
+    webget2 /srv/clash/Country.mmdb ${url}clash/Country.mmdb  >> /dev/null 2>&1
+    dler_clash_config
+    clash_ui restart_clash
+   
+    }
+
+
+
+
+update_mosdns_config () {
+    update_shell
+    echo -e "${green}更新mosdns配置!${end}"	
+    mv /srv/mosdns/config.yaml /tmp/mosdns_config.yaml.`date "+%Y.%m.%d.%H:%M"`
+    mosdns_config
+    echo -e "${green}更新geoip.dat${end}"	
+    webget2 /srv/mosdns/geoip.dat "$url_cdn/https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"  
+    echo -e "${green}更新geosite.dat${end}"	
+    webget2 /srv/mosdns/geosite.dat "$url_cdn/https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
+    clash_ui restart_mosdns
+    }
+
+
+install() {
+    check_clash_status2    
+    if [[ $? == 0 ]]; then
+    echo -e "${green}Clash_UI已安装"
+    exit 1
+    else
+    echo "---------------------------------------"		
+		echo -e "${green}       Clash+Mosdns 一键安装"
+		echo -e "${green}按照提示输入IP,子网,网关"
+		echo -e "${green}dler订阅按照提示输入token"		
+		echo -e "${green}请将config.yaml配置文件上传到/root"		
+    echo "---------------------------------------"
+    update_shell
+    read -e -p "输入本机IP:" ip_add
+		read -e -p "输入子网码:" ip_mask
+		read -e -p "输入网关:" ip_gw
+		read -e -p "输入DNS:" ip_dns
+    dler_config
+    check_disk_status
+    config_ip_dns
+		config_base
+		install_debian
+    #update_kernel
+    install_clash
+		install_mosdns		
+		install_nftables
+    install_cron
+    echo "---------------------------------------"
+		echo -e "${green}       Clash+Mosdns 安装成功"
+		echo -e "${green}Clash配置文件：/srv/clash/config.yaml"
+		echo -e "${green}Clash控制面板:http://${ip_add}:9090/ui/"		
+    echo "---------------------------------------"
+    reboot_show_menu
+ 
+    fi  
+}
+
+getipv4(){
+	ipv4=$(wget -qO- -4 -t1 -T2 members.3322.org/dyndns/getip)
+	#IP_address=$(wget -qO- -t1 -T2 http://freeapi.ipip.net/${ipv4}|sed 's/\"//g;s/,//g;s/\[//g;s/\]//g')
+	if [[ -z "${ipv4}" ]]; then
+		ipv4=$(wget -qO- -4 -t1 -T2 api.ip.sb/ip)
+		#IP_address=$(wget -qO- -t1 -T2 http://freeapi.ipip.net/${ipv4}|sed 's/\"//g;s/,//g;s/\[//g;s/\]//g')
+		if [[ -z "${ipv4}" ]]; then
+			ipv4=$(wget -qO- -4 -t1 -T2 members.3322.org/dyndns/getip)
+			#IP_address=$(wget -qO- -t1 -T2 http://freeapi.ipip.net/${ipv4}|sed 's/\"//g;s/,//g;s/\[//g;s/\]//g')
+			if [[ -z "${ipv4}" ]]; then
+				ipv4="IPv4_Error"
+			fi
+		fi
+	fi
+}
+
+get_IP_address(){
+	if [[ ! -z ${ipv4} ]]; then
+		for((integer_1 = ${user_IP_total}; integer_1 >= 1; integer_1--))
+		do
+			IP=$(echo "${ipv4}" |sed -n "$integer_1"p)
+			IP_address=$(wget -qO- -t1 -T2 http://freeapi.ipip.net/${ipv4}|sed 's/\"//g;s/,//g;s/\[//g;s/\]//g')
+			echo -e "${green}${ipv4} (${IP_address})"
+			sleep 1s
+		done
+	fi
+}
+
+
+before_show_menu() {
+    echo -n -e "${yellow}按回车返回主菜单:${end}" && read temp
+    show_menu
+}
+
+reboot_show_menu() {
+    echo -n -e "${yellow}按回车重启系统!${end}"  && read temp	
+    reboot          
+}
+
+
+
+restart_clash() {
+    supervisorctl restart clash >> /dev/null 2>&1
+    sleep 2
+    check_clash_status
+     if [[ $? == 0 ]]; then
+        echo -e "${green}Clash 重启成功!${end}"
+    else
+        echo -e "${red}重启失败!${end}"
+    fi
+    if [[ $# == 0 ]]; then
+        before_show_menu
+    fi
+}
+
+
+restart_mosdns() {
+    supervisorctl restart mosdns >> /dev/null 2>&1
+    sleep 2
+    check_mosdns_status
+    if [[ $? == 0 ]]; then
+        echo -e "${green}Mosdns 重启成功!${end}"
+    else
+        echo -e "${red}重启失败!${end}"
+    fi
+    if [[ $# == 0 ]]; then
+        before_show_menu
+    fi
+}
+
+
+status() {
+    supervisorctl status clash
+    if [[ $# == 0 ]]; then
+        before_show_menu
+    fi
+}
+
+
+
+show_status() {
+    show_clash_status
+    show_mosdns_status
+
+}
+
+restart_all() {
+    supervisorctl restart clash >> /dev/null 2>&1
+    supervisorctl restart mosdns >> /dev/null 2>&1
+    echo -e "${green}Clash+Mosdns 重启成功!${end}"
+}
+
+show_clash_status() {
+    check_clash_status
+    if [[ $? == 0 ]]; then
+        echo -e "${yellow} Clash 状态: ${green}已运行${end}"
+    else
+        echo -e "${yellow} Clash 状态: ${red}未运行${end}"
+    fi
+}
+
+check_clash_status() {
+    temp=$(supervisorctl status clash | awk '{print $2}' | cut -d "(" -f2 | cut -d ")" -f1)
+    if [[ x"${temp}" == x"RUNNING" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+check_install() {
+    check_clash_status2    
+    if [[ $? != 0 ]]; then
+    echo -e "${green}Clash_UI未安装，请先安装再使用Clash_UI!"
+    exit 1
+    fi
+}
+
+
+show_mosdns_status() {
+    check_mosdns_status
+    if [[ $? == 0 ]]; then
+        echo -e "${yellow}Mosdns 状态: ${green}已运行${end}"
+    else
+        echo -e "${yellow}Mosdns 状态: ${red}未运行${end}"
+    fi
+}
+check_mosdns_status() {
+    temp=$(supervisorctl status mosdns | awk '{print $2}' | cut -d "(" -f2 | cut -d ")" -f1)
+    if [[ x"${temp}" == x"RUNNING" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+check_disk_status() {
+   echo -e "${yellow}剩余空间:${end} $(df -h /srv | awk '{print $4}' | sed 1d )${yellow}    架构:${end} ${cpucore2}"
+
+}
+
+
+
+show_usage() {
+    echo -e "${blueb}Clash_UI 管理脚本 V${sh_ver} J. "
+    echo "-------------------------------------------------"
+    echo -e "${green}clash_ui                      - 显示管理菜单"
+    echo -e "${green}clash_ui install              - 安装 Clash+Mosdns"    
+    echo -e "${green}clash_ui restart_clash        - 重启 Clash"
+    echo -e "${green}clash_ui restart_mosdns       - 重启 Mosdns"
+    echo -e "${green}clash_ui restart              - 重启 Clash+Mosdns"
+    echo -e "${green}clash_ui status               - 查看运行状态"
+    echo -e "${green}clash_ui logs                 - 查看 Clash 日志"    
+    echo -e "${green}clash_ui update_kernel        - 更新 Debian 内核"
+    echo -e "${green}clash_ui update_clash         - 更新 Clash"
+    echo -e "${green}clash_ui update_mosdns        - 更新 Mosdns"
+    echo -e "${green}clash_ui update_config        - 更新 Clash+Mosdns配置"
+    echo -e "${green}clash_ui update               - 更新 Clash_UI 管理脚本"
+    echo "-------------------------------------------------"
+}
+
+show_menu() {
+    echo -e "
+  ${lightblueb}Clash_UI ${yellow}管理脚本 J.${end}
+
+  ${green}q. ${redb}退出脚本${end}
+———————————————————————————
+  ${green}1. 重启 ${end}Clash
+  ${green}2. 重启 ${end}Mosdns
+  ${green}3. 重启 ${end}Clash+Mosdns
+———————————————————————————
+  ${green}4. 日志 ${end}Clash
+———————————————————————————
+  ${green}5. 更新 ${end}Clash_UI
+———————————————————————————
+  ${green}6. 更新 ${end}Clash
+  ${green}7. 更新 ${end}Mosdns
+———————————————————————————
+  ${green}8. 更新 ${end}Clash配置
+  ${green}9. 更新 ${end}Mosdns配置"
+    echo -e "———————————————————————————"
+    getipv4
+    getcpucore
+    getcpucore2
+    show_status
+    echo -e "———————————————————————————"
+    update_shell
+    update_clash
+    update_mosdns
+    check_disk_status
+    echo -e "${yellow}网络信息: ${end}${local_ip} > ${ipv4}"     
+    echo -e "   ${yellow}Clash: ${end}$(clash -v | awk '{print $2}') >  ${new_clash_ver}"
+    echo -e "  ${yellow}Mosdns: ${end}$(mosdns -v | awk '{print $1}'| cut -d'-' -f1)     >  ${new_mosdns_ver}"
+    echo -e "${yellow}Clash_UI: ${end}v${sh_ver}     >  v${new_shell_ver}" ${end}    
+    echo && read -p "请输入选择 [1-10]: " num
+
+    case "${num}" in
+        q) exit 1
+        ;;
+        1) restart_clash &&before_show_menu
+        ;;
+        2) restart_mosdns &&before_show_menu
+        ;;
+        3) restart_all &&before_show_menu   
+        ;;
+        4) tail -f /tmp/clash.log       
+        ;;
+        5) update_shell_y
+        ;;
+        6) update_clash_y
+        ;;                
+        7) update_mosdns_y
+        ;;                   
+        8) update_clash_config
+        ;;
+        9) update_mosdns_config
+        ;;                    
+        *) echo -e "${red}请输入正确的数字 [1-10]${end}" &&before_show_menu
+        ;;
+    esac
+}
+
+
+if [[ $# > 0 ]]; then
+    case $1 in
+        "update_clash") update_clash_y 0 
+        ;;
+        "update_mosdns") update_mosdns_y 0 
+        ;;
+        "restart_clash") restart_clash 0
+        ;;
+        "restart_mosdns") restart_mosdns 0
+        ;;
+        "restart") restart_all 0
+        ;;        
+        "logs") tail -f /tmp/clash.log 0
+        ;;   
+        "ping") ping_service 0
+        ;; 
+        "install") install 0
+        ;;
+        "install_ping") update_shell &&install_cron 0
+        ;;                  
+        "status") show_status 0
+        ;;
+        "check_ver") check_ver 0
+        ;;        
+        "update_kernel") update_kernel &&reboot_show_menu 0
+        ;;        
+        "update_clash_config") update_clash_config 0
+        ;;
+        "update_mosdns_config") update_mosdns_config 0
+        ;;
+        "update_config") update_config 0
+        ;;                   
+        "update") update_shell 0
+        ;;                  
+        *) show_usage
+        ;;
+    esac
+else
+    show_menu
+fi
