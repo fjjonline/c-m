@@ -28,8 +28,6 @@ lightblueb="\033[1;36m"
 sh_ver="3.0.2"
 
 
-url="http://129.226.175.232:8282/"
-
 url_cdn="https://gh.api.99988866.xyz"
 
 cpu=$(hostnamectl | grep Architecture: | awk '{print $2}')
@@ -1095,7 +1093,7 @@ echo -e "${green}软件安装完成!${end}"
 }
 
 install_clash() {
-    new_clash_ver=$( wget -qO- ${url}version | grep clash_v | awk '{print $2}')
+    new_clash_ver=$( wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep clash_v | awk '{print $2}')
     if [[ ! -n "$new_clash_ver" ]]; then
     echo -e "${red}Clash检测版本失败!${end}"
     exit 1
@@ -1115,7 +1113,7 @@ install_clash() {
      mv /tmp/clash/clash /usr/bin/clash
      chmod +x /usr/bin/clash
      setcap cap_net_bind_service=+ep /usr/bin/clash
-	   webget2  /tmp/ui.tar.gz  ${url}clash/ui.tar.gz >> /dev/null 2>&1
+	   webget2  /tmp/ui.tar.gz  ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/clash/ui.tar.gz >> /dev/null 2>&1
      if [[ $? -ne 0 ]]; then
      echo -e "${red}UI下载失败!${end}"
      exit 1
@@ -1134,7 +1132,7 @@ install_clash() {
 }
 
 update_clash_y() {
-	      new_clash_ver=$( wget -qO- ${url}version | grep clash_v | awk '{print $2}')
+	      new_clash_ver=$( wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep clash_v | awk '{print $2}')
         if [[ ! -n "$new_clash_ver" ]]; then
         echo -e "${red}Clash检测版本失败!${end}"
         exit 1
@@ -1159,7 +1157,7 @@ update_clash_y() {
 }
 
 update_clash() {
-	   new_clash_ver=$( wget -qO- ${url}version | grep clash_v | awk '{print $2}')
+	   new_clash_ver=$( wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep clash_v | awk '{print $2}')
      now_clash_ver=$(clash -v | awk '{print $2}')
 	   if [[ "${now_clash_ver}" != "${new_clash_ver}" ]]  ;then
 	     echo -e "Clash已有新版本: ${new_clash_ver}，当前版本:${now_clash_ver}，开始安装"
@@ -1186,7 +1184,7 @@ update_clash() {
 }
 
 install_mosdns() {
-    new_mosdns_ver=$(wget -qO- ${url}version | grep mosdns_v | awk '{print $2}')
+    new_mosdns_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep mosdns_v | awk '{print $2}')
     if [[ ! -n "$new_mosdns_ver" ]]; then
     echo -e "${red}Mosdns检测版本失败!${end}"
     exit 1
@@ -1194,7 +1192,7 @@ install_mosdns() {
     if [ ! -d "/tmp/mosdns" ]; then
      mkdir /tmp/mosdns
      fi 
-     webget2   /tmp/mosdns/mosdns.tar.gz ${url}mosdns/mosdns.tar.gz  >> /dev/null 2>&1
+     webget2   /tmp/mosdns/mosdns.tar.gz ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/mosdns/mosdns.tar.gz  >> /dev/null 2>&1
      if [[ $? -ne 0 ]]; then
      echo -e "${red}Mosdns配置下载失败!${end}"
      exit 1
@@ -1229,7 +1227,7 @@ install_mosdns() {
 
 
 update_mosdns_y() {
-        new_mosdns_ver=$(wget -qO- ${url}version | grep mosdns_v | awk '{print $2}')
+        new_mosdns_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep mosdns_v | awk '{print $2}')
         if [[ ! -n "$new_mosdns_ver" ]]; then
         echo -e "${red}Mosdns检测版本失败!${end}"
         exit 1
@@ -1258,7 +1256,7 @@ update_mosdns_y() {
 
 
 update_mosdns() {
-        new_mosdns_ver=$(wget -qO- ${url}version | grep mosdns_v | awk '{print $2}')
+        new_mosdns_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep mosdns_v | awk '{print $2}')
         now_mosdns_ver=$(mosdns -v | awk '{print $1}'| cut -d'-' -f1)
 	      if [[ "${now_mosdns_ver}" != "${new_mosdns_ver}" ]]  ;then
 	      echo -e "Mosdns已有新版本: ${new_mosdns_ver}，当前版本:${now_mosdns_ver}，开始安装"
@@ -1291,8 +1289,8 @@ update_mosdns() {
 }
 
 update_shell_y() {
- 	      new_shell_ver=$(wget -qO- ${url}version | grep version | awk '{print $2}')
-        webget2  /tmp/clash_ui  ${url}clash_ui
+ 	new_shell_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep version | awk '{print $2}')
+        webget2  /tmp/clash_ui  ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/clash_ui
         if [[ $? -ne 0 ]]; then
         echo -e "${red}Clash_UI下载失败!${end}"
         exit 1
@@ -1306,10 +1304,10 @@ update_shell_y() {
 
 update_shell() {
         sed -i  s/'clash_ui restart'/'clash_ui check_ver'/g  /var/spool/cron/crontabs/root
-	      new_shell_ver=$(wget -qO- ${url}version | grep version | awk '{print $2}')
+	      new_shell_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep version | awk '{print $2}')
 	      if [[ "${sh_ver}" != "${new_shell_ver}" ]]  ;then
 	      echo -e "`date +%F\ %T` Clash_UI  最新版本: ${new_shell_ver}，当前版本:${sh_ver}"
-        webget2 /tmp/clash_ui ${url}clash_ui
+        webget2 /tmp/clash_ui ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/clash_ui
         if [[ $? -ne 0 ]]; then
         echo -e "${red}Clash_UI下载失败!${end}"
         exit 1
@@ -1327,7 +1325,7 @@ install_nftables() {
         mkdir /tmp/nftables
      fi
      mkdir -p /etc/nftables
-     webget2 /tmp/nftables/nftables.zip  ${url}nftables/nftables.zip >> /dev/null 2>&1
+     webget2 /tmp/nftables/nftables.zip  ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/nftables/nftables.zip >> /dev/null 2>&1
      if [[ $? -ne 0 ]]; then
      echo -e "${red}Nftables下载失败!${end}"
      exit 1
@@ -1367,7 +1365,7 @@ crontab /var/spool/cron/crontabs/root
 check_clash_ver() {
 
        new_clash_ver=$(wget -qO- https://api.github.com/repos/Dreamacro/clash/releases | grep '"name": "Premium' | sed -E 's/.*"Premium ([^"]+)".*/\1/')
-   	   #new_clash_ver=$( wget -qO- ${url}version | grep clash_v | awk '{print $2}')
+       #new_clash_ver=$( wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep clash_v | awk '{print $2}')
        now_clash_ver=$(clash -v | awk '{print $2}')
        if [ ! -d "/srv/version" ]; then
        cat << EOF > /srv/version
@@ -1381,7 +1379,7 @@ EOF
 
 check_mosdns_ver() {
        new_mosdns_ver=$(wget -qO- https://api.github.com/repos/IrineSistiana/mosdns/releases | grep '"tag_name": ' | sed -E 's/.*"([^"]+)".*/\1/' | head -n 1)
-       #new_mosdns_ver=$(wget -qO- ${url}version | grep mosdns_v | awk '{print $2}')
+       #new_mosdns_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep mosdns_v | awk '{print $2}')
        now_mosdns_ver=$(mosdns -v | awk '{print $1}'| cut -d'-' -f1)
        sed -i  's/'mosdns_v'/'"mosdns_v ${new_mosdns_ver}"'/g'  /srv/version
 
@@ -1400,7 +1398,7 @@ update_kernel() {
        mkdir /tmp/deb
        fi
        echo -e "${green}Debian内核开始下载!${end}" 
-       webget2 /tmp/deb/debian.tar.gz ${url}debian/debian.tar.gz  >> /dev/null 2>&1
+       webget2 /tmp/deb/debian.tar.gz ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/debian/debian.tar.gz  >> /dev/null 2>&1
        if [[ $? -ne 0 ]]; then
        echo -e "${red}Debian内核下载失败!${end}"
        exit 1
@@ -1483,7 +1481,7 @@ update_clash_config () {
  		echo -e "${green}更新clash配置!${end}"	 
     mv /srv/clash/config.yaml /tmp/clash_config.yaml.`date "+%Y.%m.%d.%H:%M"`
     rm -rf /srv/clash/*.yaml
-    webget2 /srv/clash/Country.mmdb ${url}clash/Country.mmdb  >> /dev/null 2>&1
+    webget2 /srv/clash/Country.mmdb ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/clash/Country.mmdb  >> /dev/null 2>&1
     dler_clash_config
     clash_ui restart_clash
    
