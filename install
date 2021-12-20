@@ -11,9 +11,9 @@ green='\033[0;32m'
 yellow='\033[0;33m'
 plain='\033[0m'
 
-webget="http://129.226.175.232:8282/"
+url_cdn="https://gh.api.99988866.xyz"
 
-wget -O /usr/bin/clash_ui ${webget}clash_ui >> /dev/null 2>&1
+wget -O /usr/bin/clash_ui ${webget}/https://raw.githubusercontent.com/fjjonline/c-m/main/clash_ui >> /dev/null 2>&1
 chmod +x /usr/bin/clash_ui >> /dev/null 2>&1
 echo "---------------------------------------"
 echo -e "${green}Clash_ui 安装成功${plain}"
