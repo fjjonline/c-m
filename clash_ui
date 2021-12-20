@@ -1064,16 +1064,15 @@ echo -e "${green}软件安装完成!${end}"
 }
 
 install_clash() {
-    new_clash_ver=$( wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep clash_v | awk '{print $2}')
-    if [[ ! -n "$new_clash_ver" ]]; then
-    echo -e "${red}Clash检测版本失败!${end}"
-    exit 1
-    fi      
-    if [ ! -d "/tmp/clash" ]; then
-    mkdir /tmp/clash
-    fi 
-    webget2 /tmp/clash/clash.gz "$url_cdn/https://github.com/Dreamacro/clash/releases/download/premium/clash-linux-${cpucore}-${new_clash_ver}.gz"
-
+     new_clash_ver=$( wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep clash_v | awk '{print $2}')
+     if [[ ! -n "$new_clash_ver" ]]; then
+     echo -e "${red}Clash检测版本失败!${end}"
+     exit 1
+     fi      
+     if [ ! -d "/tmp/clash" ]; then
+     mkdir /tmp/clash
+     fi 
+     webget2 /tmp/clash/clash.gz "$url_cdn/https://github.com/Dreamacro/clash/releases/download/premium/clash-linux-${cpucore}-${new_clash_ver}.gz"
      if [[ $? -ne 0 ]]; then
      echo -e "${red}Clash下载失败!${end}"
      exit 1
@@ -1084,31 +1083,31 @@ install_clash() {
      mv /tmp/clash/clash /usr/bin/clash
      chmod +x /usr/bin/clash
      setcap cap_net_bind_service=+ep /usr/bin/clash
-	   webget2  /tmp/ui.tar.gz  ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/clash/ui.tar.gz >> /dev/null 2>&1
+     webget2  /tmp/ui.tar.gz  ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/clash/ui.tar.gz >> /dev/null 2>&1
      if [[ $? -ne 0 ]]; then
      echo -e "${red}UI下载失败!${end}"
      exit 1
      fi
      echo -e "${green}UI下载成功!${end}" 
-	   if [ ! -d "/srv/clash" ]; then
+     if [ ! -d "/srv/clash" ]; then
      mkdir /srv/clash
      fi 
-	   tar zxvf /tmp/ui.tar.gz  -C /srv/clash/ >> /dev/null 2>&1
+     tar zxvf /tmp/ui.tar.gz  -C /srv/clash/ >> /dev/null 2>&1
      rm -rf /tmp/ui.tar.gz
-	   supervisor_clash_config
-	   supervisorctl update >> /dev/null 2>&1
+     supervisor_clash_config
+     supervisorctl update >> /dev/null 2>&1
      supervisorctl restart clash >> /dev/null 2>&1
      echo -e "${green}Clash安装成功!${end}"
      echo -e "${green}Clash初始化!${end}" &&sleep 30
 }
 
 update_clash_y() {
-	      new_clash_ver=$( wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep clash_v | awk '{print $2}')
+	new_clash_ver=$( wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep clash_v | awk '{print $2}')
         if [[ ! -n "$new_clash_ver" ]]; then
         echo -e "${red}Clash检测版本失败!${end}"
         exit 1
         fi  
-	      if [ ! -d "/tmp/clash" ]; then
+	if [ ! -d "/tmp/clash" ]; then
         mkdir /tmp/clash
         fi            
         webget2 /tmp/clash/clash.gz "$url_cdn/https://github.com/Dreamacro/clash/releases/download/premium/clash-linux-${cpucore}-${new_clash_ver}.gz"
@@ -1128,10 +1127,10 @@ update_clash_y() {
 }
 
 update_clash() {
-	   new_clash_ver=$( wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep clash_v | awk '{print $2}')
-     now_clash_ver=$(clash -v | awk '{print $2}')
-	   if [[ "${now_clash_ver}" != "${new_clash_ver}" ]]  ;then
-	     echo -e "Clash已有新版本: ${new_clash_ver}，当前版本:${now_clash_ver}，开始安装"
+	new_clash_ver=$( wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep clash_v | awk '{print $2}')
+        now_clash_ver=$(clash -v | awk '{print $2}')
+	if [[ "${now_clash_ver}" != "${new_clash_ver}" ]]  ;then
+	echo -e "Clash已有新版本: ${new_clash_ver}，当前版本:${now_clash_ver}，开始安装"
         if [[ ! -n "$new_clash_ver" ]]; then
         echo -e "${red}Clash检测版本失败!${end}"
         exit 1
@@ -1184,12 +1183,12 @@ install_mosdns() {
      cd /tmp/mosdns
      rm -rf /usr/bin/mosdns
      unzip /tmp/mosdns/mosdns.zip  >> /dev/null 2>&1
-	   mv mosdns /usr/bin/mosdns
+     mv mosdns /usr/bin/mosdns
      chmod 777 /usr/bin/mosdns
      rm -rf /tmp/mosdns
-	   supervisor_mosdns_config
-	   mosdns_config
-	   supervisorctl update >> /dev/null 2>&1
+     supervisor_mosdns_config
+     mosdns_config
+     supervisorctl update >> /dev/null 2>&1
      supervisorctl restart mosdns >> /dev/null 2>&1
      echo -e "${green}Mosdns安装成功!${end}"
 }
@@ -1293,7 +1292,7 @@ update_shell() {
 
 install_nftables() {
      if [ ! -d "/tmp/nftables" ]; then
-        mkdir /tmp/nftables
+     mkdir /tmp/nftables
      fi
      mkdir -p /etc/nftables
      webget2 /tmp/nftables/nftables.zip  ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/nftables/nftables.zip >> /dev/null 2>&1
@@ -1307,14 +1306,14 @@ install_nftables() {
      mv /tmp/nftables/nftables/chnroute.nft /etc/nftables/chnroute.nft
      mv /tmp/nftables/nftables/private.nft /etc/nftables/private.nft
      mv /tmp/nftables/nftables/nftables.conf /etc/nftables.conf
-	   ip route replace default dev utun table 114  >> /dev/null 2>&1
-	   ip rule del fwmark 114514 lookup 114  >> /dev/null 2>&1
-	   ip rule add fwmark 114514 lookup 114 >> /dev/null 2>&1
-	   sudo sh -c "nft flush ruleset && nft -f /etc/nftables.conf" >> /dev/null 2>&1
-	   systemctl enable nftables.service >> /dev/null 2>&1
- 	   systemctl start nftables.service >> /dev/null 2>&1
- 	   rm -rf /tmp/nftables
- 	   echo -e "${green}Nftables安装成功!${end}"
+     ip route replace default dev utun table 114  >> /dev/null 2>&1
+     ip rule del fwmark 114514 lookup 114  >> /dev/null 2>&1
+     ip rule add fwmark 114514 lookup 114 >> /dev/null 2>&1
+     sudo sh -c "nft flush ruleset && nft -f /etc/nftables.conf" >> /dev/null 2>&1
+     systemctl enable nftables.service >> /dev/null 2>&1
+     systemctl start nftables.service >> /dev/null 2>&1
+     rm -rf /tmp/nftables
+     echo -e "${green}Nftables安装成功!${end}"
 }
 
 
@@ -1406,14 +1405,14 @@ fi
 
 
 dler_config() {
-		read -e -p "是否使用dler订阅? [Y/n] :" yn
-		[[ -z "${yn}" ]] && yn="y"
-		if [[ $yn == [Yy] ]]; then
-			read -e -p "请输入dler订阅TOKEN:" token
-		fi
+    read -e -p "是否使用dler订阅? [Y/n] :" yn
+    [[ -z "${yn}" ]] && yn="y"
+    if [[ $yn == [Yy] ]]; then
+    read -e -p "请输入dler订阅TOKEN:" token
+    fi
     if [ ! "$token" ];then
     if [ ! -d "/srv/clash" ]; then
-       mkdir /srv/clash
+    mkdir /srv/clash
     fi    
     mv /root/config.yaml /srv/clash/config.yaml     
     else
@@ -1430,7 +1429,7 @@ update_config () {
 
 update_clash_config () {
     update_shell
- 		echo -e "${green}更新clash配置!${end}"	 
+    echo -e "${green}更新clash配置!${end}"	 
     mv /srv/clash/config.yaml /tmp/clash_config.yaml.`date "+%Y.%m.%d.%H:%M"`
     rm -rf /srv/clash/*.yaml
     webget2 /srv/clash/Country.mmdb ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/clash/Country.mmdb  >> /dev/null 2>&1
@@ -1462,32 +1461,31 @@ install() {
     exit 1
     else
     echo "---------------------------------------"		
-		echo -e "${green}       Clash+Mosdns 一键安装"
-		echo -e "${green}按照提示输入IP,子网,网关"
-		echo -e "${green}dler订阅按照提示输入token"		
-		echo -e "${green}请将config.yaml配置文件上传到/root"		
+    echo -e "${green}       Clash+Mosdns 一键安装"
+    echo -e "${green}按照提示输入IP,子网,网关"
+    echo -e "${green}dler订阅按照提示输入token"		
+    echo -e "${green}请将config.yaml配置文件上传到/root"		
     echo "---------------------------------------"
     update_shell
     read -e -p "输入本机IP:" ip_add
-		read -e -p "输入子网码:" ip_mask
-		read -e -p "输入网关:" ip_gw
-		read -e -p "输入DNS:" ip_dns
+    read -e -p "输入子网码:" ip_mask
+    read -e -p "输入网关:" ip_gw
+    read -e -p "输入DNS:" ip_dns
     dler_config
     check_disk_status
     config_ip_dns
-		config_base
-		install_debian
+    config_base
+    install_debian
     install_clash
-		install_mosdns		
-		install_nftables
+    install_mosdns		
+    install_nftables
     install_cron
     echo "---------------------------------------"
-		echo -e "${green}       Clash+Mosdns 安装成功"
-		echo -e "${green}Clash配置文件：/srv/clash/config.yaml"
-		echo -e "${green}Clash控制面板:http://${ip_add}:9090/ui/"		
+    echo -e "${green}       Clash+Mosdns 安装成功"
+    echo -e "${green}Clash配置文件：/srv/clash/config.yaml"
+    echo -e "${green}Clash控制面板:http://${ip_add}:9090/ui/"		
     echo "---------------------------------------"
     reboot_show_menu
- 
     fi  
 }
 
@@ -1536,13 +1534,13 @@ restart_clash() {
     supervisorctl restart clash >> /dev/null 2>&1
     sleep 2
     check_clash_status
-     if [[ $? == 0 ]]; then
-        echo -e "${green}Clash 重启成功!${end}"
+    if [[ $? == 0 ]]; then
+    echo -e "${green}Clash 重启成功!${end}"
     else
-        echo -e "${red}重启失败!${end}"
+    echo -e "${red}重启失败!${end}"
     fi
     if [[ $# == 0 ]]; then
-        before_show_menu
+    before_show_menu
     fi
 }
 
@@ -1552,12 +1550,12 @@ restart_mosdns() {
     sleep 2
     check_mosdns_status
     if [[ $? == 0 ]]; then
-        echo -e "${green}Mosdns 重启成功!${end}"
+    echo -e "${green}Mosdns 重启成功!${end}"
     else
-        echo -e "${red}重启失败!${end}"
+    echo -e "${red}重启失败!${end}"
     fi
     if [[ $# == 0 ]]; then
-        before_show_menu
+    before_show_menu
     fi
 }
 
@@ -1565,7 +1563,7 @@ restart_mosdns() {
 status() {
     supervisorctl status clash
     if [[ $# == 0 ]]; then
-        before_show_menu
+    before_show_menu
     fi
 }
 
@@ -1586,9 +1584,9 @@ restart_all() {
 show_clash_status() {
     check_clash_status
     if [[ $? == 0 ]]; then
-        echo -e "${yellow} Clash 状态: ${green}已运行${end}"
+    echo -e "${yellow} Clash 状态: ${green}已运行${end}"
     else
-        echo -e "${yellow} Clash 状态: ${red}未运行${end}"
+    echo -e "${yellow} Clash 状态: ${red}未运行${end}"
     fi
 }
 
@@ -1613,9 +1611,9 @@ check_install() {
 show_mosdns_status() {
     check_mosdns_status
     if [[ $? == 0 ]]; then
-        echo -e "${yellow}Mosdns 状态: ${green}已运行${end}"
+    echo -e "${yellow}Mosdns 状态: ${green}已运行${end}"
     else
-        echo -e "${yellow}Mosdns 状态: ${red}未运行${end}"
+    echo -e "${yellow}Mosdns 状态: ${red}未运行${end}"
     fi
 }
 check_mosdns_status() {
