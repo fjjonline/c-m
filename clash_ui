@@ -1364,25 +1364,6 @@ update_clash
 update_mosdns
 }
 
-update_kernel() {
-       if [ ! -d "/tmp/deb" ]; then
-       mkdir /tmp/deb
-       fi
-       echo -e "${green}Debian内核开始下载!${end}" 
-       webget2 /tmp/deb/debian.tar.gz ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/debian/debian.tar.gz  >> /dev/null 2>&1
-       if [[ $? -ne 0 ]]; then
-       echo -e "${red}Debian内核下载失败!${end}"
-       exit 1
-       fi
-       echo -e "${green}Debian内核下载成功!${end}" 
-  	   cd /tmp/deb
-       tar zxvf debian.tar.gz >> /dev/null 2>&1
-  	   echo -e "${green}Debian开始升级内核!${end}"
-  	   sudo dpkg -i linux-image-*xanmod*.deb linux-headers-*xanmod*.deb linux-libc* intel* iucode* >> /dev/null 2>&1
-  	   update-grub >> /dev/null 2>&1
-	     rm -rf /tmp/deb
-       echo -e "${green}Debian升级内核成功!${end}"
-}
 
 
 
@@ -1496,7 +1477,6 @@ install() {
     config_ip_dns
 		config_base
 		install_debian
-    #update_kernel
     install_clash
 		install_mosdns		
 		install_nftables
@@ -1756,9 +1736,7 @@ if [[ $# > 0 ]]; then
         "status") show_status 0
         ;;
         "check_ver") check_ver 0
-        ;;        
-        "update_kernel") update_kernel &&reboot_show_menu 0
-        ;;        
+        ;;              
         "update_clash_config") update_clash_config 0
         ;;
         "update_mosdns_config") update_mosdns_config 0
