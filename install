@@ -1,0 +1,23 @@
+#!/bin/bash
+
+#======================================================
+#   System Required:  Debian 10+ 
+#   Description: Manage clash
+#   Author: J. 2021.12.20
+#======================================================
+
+red='\033[0;31m'
+green='\033[0;32m'
+yellow='\033[0;33m'
+plain='\033[0m'
+
+webget="http://129.226.175.232:8282/"
+
+wget -O /usr/bin/clash_ui ${webget}clash_ui >> /dev/null 2>&1
+chmod +x /usr/bin/clash_ui >> /dev/null 2>&1
+echo "---------------------------------------"
+echo -e "${green}Clash_ui 安装成功${plain}"
+echo -e "${green}Clash_UI使用方法 clash_ui${plain}"
+echo -e "${green}第一次请用命令安装 clash_ui install${plain}"
+echo "---------------------------------------"
+clash_ui install
