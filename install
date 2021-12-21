@@ -15,7 +15,7 @@ url_cdn="https://gh.api.99988866.xyz"
 echo "199.232.68.133 raw.githubusercontent.com" >> /etc/hosts
 
 #wget -O /usr/bin/clash_ui ${webget}/https://raw.githubusercontent.com/fjjonline/c-m/main/clash_ui >> /dev/null 2>&1
-wget -O /usr/bin/clash_ui https://cdn.jsdelivr.net/gh/fjjonline/c-m@main/clash_ui >> /dev/null 2>&1
+wget -O /usr/bin/clash_ui https://raw.githubusercontent.com/fjjonline/c-m/main/clash_ui >> /dev/null 2>&1
 chmod +x /usr/bin/clash_ui >> /dev/null 2>&1
 echo "---------------------------------------"
 echo -e "${green}Clash_ui 安装成功${plain}"
