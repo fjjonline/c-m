@@ -1465,7 +1465,8 @@ install() {
     echo -e "${green}       Clash+Mosdns 一键安装"
     echo -e "${green}按照提示输入IP,子网,网关"
     echo -e "${green}dler订阅按照提示输入token"		
-    echo -e "${green}请将config.yaml配置文件上传到/root"		
+    echo -e "${green}请将config.yaml配置文件上传到/root"	
+    check_disk_status
     echo "---------------------------------------"
     update_shell
     read -e -p "输入本机IP:" ip_add
@@ -1473,7 +1474,6 @@ install() {
     read -e -p "输入网关:" ip_gw
     read -e -p "输入DNS:" ip_dns
     dler_config
-    check_disk_status
     config_ip_dns
     config_base
     install_debian
