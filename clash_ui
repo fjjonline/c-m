@@ -1748,7 +1748,7 @@ if [[ $# > 0 ]]; then
         ;;
         "update_config") update_config 0
         ;;                   
-        "update") update_shell 0
+        "update") update_shell_y 0
         ;;                  
         *) show_usage
         ;;
