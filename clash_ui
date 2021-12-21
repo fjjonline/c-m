@@ -796,127 +796,7 @@ EOF
 }
 
 
-mosdns_config() {
-cat << EOF > /srv/mosdns/config.yaml
-log:
-  level: info
-  file: /tmp/mosdns.log
- 
-plugin:
-  - tag: main_server
-    type: server
-    args:
-      entry:
-        - _single_flight
-        - _no_ecs
-        - lazy_cache
-        - main_sequence
-      server:                       
-        - protocol: udp             
-          addr: 0.0.0.0:53          
-          timeout: 5                
-        - protocol: tcp
-          addr: 0.0.0.0:53
-          timeout: 5
-          idle_timeout: 10   
 
-  - tag: main_sequence
-    type: sequence
-    args:
-      exec:
-        - if:
-            - query_is_ad_domain
-          exec:
-            - _block_with_nxdomain
-            - _end
-        - if:
-            - query_is_local_domain
-            - '!_query_is_common'
-          exec:
-            - forward_local
-            - _end
-        - if:
-            - query_is_non_local_domain
-          exec:
-            - if:
-                - _qtype_AAAA
-              exec:
-                - _block_with_empty_response
-                - _end
-            - forward_remote
-            - _end
-        - primary:
-            - forward_local
-            - if:
-                - '!response_has_local_ip'
-              exec:
-                - _drop_response
-          secondary:
-            - if:
-                - _qtype_AAAA
-              exec:
-                - _block_with_empty_response
-                - _end
-            - forward_remote
-          fast_fallback: 150
-          always_standby: true
-
-  - tag: forward_local
-    type: fast_forward
-    args:
-      upstream:     
-        - addr: 119.29.29.29
-          trusted: true
-          idle_timeout: 30
-          max_conns: 5
-        - addr: 223.6.6.6
-          trusted: true
-          idle_timeout: 30
-          max_conns: 5
-        - addr: 114.114.114.114
-          trusted: true
-          idle_timeout: 30
-          max_conns: 5          
-      timeout: 2
-
-  - tag: forward_remote
-    type: fast_forward
-    args:
-      upstream:
-          addr: 127.0.0.1:5352
-          trusted: true
-
-  - tag: lazy_cache
-    type: cache
-    args:
-      size: 4096
-      lazy_cache_ttl: 259200
-
-  - tag: query_is_local_domain
-    type: query_matcher
-    args:
-      domain:
-        - 'ext:./geosite.dat:cn'
-
-  - tag: query_is_non_local_domain
-    type: query_matcher
-    args:
-      domain:
-        - 'ext:./geosite.dat:geolocation-!cn'
-
-  - tag: query_is_ad_domain
-    type: query_matcher
-    args:
-      domain:
-        - 'ext:./geosite.dat:category-ads-all'
-
-  - tag: response_has_local_ip
-    type: response_matcher
-    args:
-      ip:
-        - 'ext:./geoip.dat:cn'
-EOF
-}
 
 
 config_base() { 
@@ -1186,13 +1066,14 @@ install_mosdns() {
      unzip /tmp/mosdns/mosdns.zip  >> /dev/null 2>&1
      mv mosdns /usr/bin/mosdns
      chmod 777 /usr/bin/mosdns
+     webget2 /srv/mosdns/config.yaml "${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/mosdns/config.yaml"  
+     echo -e "${green}config.yaml下载成功${end}"	     
      webget2 /srv/mosdns/geoip.dat "$url_cdn/https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"  
      echo -e "${green}geoip.dat下载成功${end}"	
      webget2 /srv/mosdns/geosite.dat "$url_cdn/https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
      echo -e "${green}geosite.dat下载成功${end}"	     
      rm -rf /tmp/mosdns
      supervisor_mosdns_config
-     mosdns_config
      supervisorctl update >> /dev/null 2>&1
      supervisorctl restart mosdns >> /dev/null 2>&1
      echo -e "${green}Mosdns安装成功!${end}"
@@ -1220,7 +1101,8 @@ update_mosdns_y() {
         cd /tmp/mosdns
         rm -rf /usr/bin/mosdns
         rm -rf /srv/mosdns/config.yaml
-        mosdns_config
+        webget2 /srv/mosdns/config.yaml "${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/mosdns/config.yaml"  
+        echo -e "${green}config.yaml下载成功${end}"	
         unzip /tmp/mosdns/mosdns.zip  >> /dev/null 2>&1
         mv mosdns /usr/bin/mosdns
         chmod 777 /usr/bin/mosdns
@@ -1254,7 +1136,8 @@ update_mosdns() {
         cd /tmp/mosdns
         rm -rf /usr/bin/mosdns
         rm -rf /srv/mosdns/config.yaml
-        mosdns_config
+        webget2 /srv/mosdns/config.yaml "${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/mosdns/config.yaml"  
+        echo -e "${green}config.yaml下载成功${end}"	
         unzip /tmp/mosdns/mosdns.zip  >> /dev/null 2>&1
         mv /tmp/mosdns/mosdns /usr/bin/mosdns
         chmod 777 /usr/bin/mosdns
@@ -1447,15 +1330,16 @@ update_clash_config () {
 
 
 update_mosdns_config () {
-    update_shell
-    echo -e "${green}更新mosdns配置!${end}"	
-    mv /srv/mosdns/config.yaml /tmp/mosdns_config.yaml.`date "+%Y.%m.%d.%H:%M"`
-    mosdns_config
-    echo -e "${green}更新geoip.dat${end}"	
-    webget2 /srv/mosdns/geoip.dat "$url_cdn/https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"  
-    echo -e "${green}更新geosite.dat${end}"	
-    webget2 /srv/mosdns/geosite.dat "$url_cdn/https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
-    clash_ui restart_mosdns
+     update_shell
+     echo -e "${green}更新mosdns配置!${end}"	
+     mv /srv/mosdns/config.yaml /tmp/mosdns_config.yaml.`date "+%Y.%m.%d.%H:%M"`
+     webget2 /srv/mosdns/config.yaml "${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/mosdns/config.yaml"  
+     echo -e "${green}config.yaml下载成功${end}"	     
+     webget2 /srv/mosdns/geoip.dat "$url_cdn/https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"  
+     echo -e "${green}geoip.dat下载成功${end}"	
+     webget2 /srv/mosdns/geosite.dat "$url_cdn/https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
+     echo -e "${green}geosite.dat下载成功${end}"
+     clash_ui restart_mosdns
     }
 
 
