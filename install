@@ -13,7 +13,29 @@ plain='\033[0m'
 
 url_cdn="https://gh.api.99988866.xyz"
 echo "199.232.68.133 raw.githubusercontent.com" >> /etc/hosts
-wget -O /usr/bin/clash_ui $url_cdn/https://raw.githubusercontent.com/fjjonline/c-m/main/clash_ui
+webget(){
+	#参数【$1】代表下载目录，【$2】代表在线地址
+	#参数【$3】代表输出显示，【$4】不启用重定向
+	if curl --version > /dev/null 2>&1;then
+		[ "$3" = "echooff" ] && progress='-s' || progress='-#'
+		[ -z "$4" ] && redirect='-L' || redirect=''
+		result=$(curl -w %{http_code} --connect-timeout 5 $progress $redirect -ko $1 $2)
+	else
+		if wget --version > /dev/null 2>&1;then
+			[ "$3" = "echooff" ] && progress='-q' || progress='-q --show-progress'
+			[ "$4" = "rediroff" ] && redirect='--max-redirect=0' || redirect=''
+			certificate='--no-check-certificate'
+			timeout='--timeout=3'
+		fi
+		[ "$3" = "echoon" ] && progress=''
+		[ "$3" = "echooff" ] && progress='-q'
+		wget $progress $redirect $certificate $timeout -O $1 $2 
+		[ $? -eq 0 ] && result="200"
+	fi
+}
+
+
+webget /usr/bin/clash_ui $url_cdn/https://raw.githubusercontent.com/fjjonline/c-m/main/clash_ui
 #wget -O /usr/bin/clash_ui https://raw.githubusercontent.com/fjjonline/c-m/main/clash_ui >> /dev/null 2>&1
 chmod +x /usr/bin/clash_ui >> /dev/null 2>&1
 echo "---------------------------------------"
