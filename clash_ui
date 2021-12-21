@@ -1273,7 +1273,6 @@ update_shell_y() {
 }
 
 update_shell() {
-        sed -i  s/'clash_ui restart'/'clash_ui check_ver'/g  /var/spool/cron/crontabs/root
 	new_shell_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep version | awk '{print $2}')
 	if [[ "${sh_ver}" != "${new_shell_ver}" ]]  ;then
 	echo -e "`date +%F\ %T` Clash_UI  最新版本: ${new_shell_ver}，当前版本:${sh_ver}"
