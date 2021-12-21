@@ -34,7 +34,7 @@ webget(){
 	fi
 }
 
-
+webget /srv/version $url_cdn/https://raw.githubusercontent.com/fjjonline/c-m/main/version >> /dev/null 2>&1
 webget /usr/bin/clash_ui $url_cdn/https://raw.githubusercontent.com/fjjonline/c-m/main/clash_ui
 #wget -O /usr/bin/clash_ui https://raw.githubusercontent.com/fjjonline/c-m/main/clash_ui >> /dev/null 2>&1
 chmod +x /usr/bin/clash_ui >> /dev/null 2>&1
