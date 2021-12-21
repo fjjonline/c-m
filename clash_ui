@@ -25,7 +25,7 @@ lightblue="\033[0;36m"
 lightblueb="\033[1;36m"
 
 
-sh_ver="3.0.5"
+sh_ver="3.0.6"
 
 
 url_cdn="https://gh.api.99988866.xyz"
@@ -798,17 +798,19 @@ EOF
 
 mosdns_config() {
 cat << EOF > /srv/mosdns/config.yaml
-################# 日志 ################
 log:
-  level: info           
-  file: /tmp/mosdns.log    
-  ################# 必要插件 ################
+  level: info           # 日志级别。可选 `debug` `info` `warn` `error`。默认 `info`。
+  file: /tmp/mosdns.log
+ 
 plugin:
-  - tag: main_server                
-    type: server                    
-    args:                           
-      entry: main_sequence         
-      max_concurrent_queries: 0     
+  - tag: main_server
+    type: server
+    args:
+      entry:
+        - _single_flight
+        - _no_ecs
+        - lazy_cache
+        - main_sequence
       server:                       
         - protocol: udp             
           addr: 0.0.0.0:53          
@@ -816,35 +818,52 @@ plugin:
         - protocol: tcp
           addr: 0.0.0.0:53
           timeout: 5
-          idle_timeout: 10          
-################# 可执行插件 ################
-  - tag: main_sequence      
-    type: sequence          
-    args:                           
-      exec:   
-        - hosts
+          idle_timeout: 10   
+
+  - tag: main_sequence
+    type: sequence
+    args:
+      exec:
         - if:
-            - adblock_list               
-          exec:       
-            - _block_with_empty_response              
-            - _end
-        - if:
-            - black_list                 
-          exec:       
-            - forward_clash              
-            - _end 
-        - forward_clash
-        - if:
-            - white_list
-            - direct_list           
+            - query_is_ad_domain
           exec:
-            - forward_direct         
+            - _block_with_nxdomain
             - _end
-################ 解析服务器插件 #################
-##### 解析直连域名的插件，direct #####
-  - tag: forward_direct
-    type: fast_forward                   
-    args:    
+        - if:
+            - query_is_local_domain
+            - '!_query_is_common'
+          exec:
+            - forward_local
+            - _end
+        - if:
+            - query_is_non_local_domain
+          exec:
+            - if:
+                - _qtype_AAAA
+              exec:
+                - _block_with_empty_response
+                - _end
+            - forward_remote
+            - _end
+        - primary:
+            - forward_local
+            - if:
+                - '!response_has_local_ip'
+              exec:
+                - _drop_response
+          secondary:
+            - if:
+                - _qtype_AAAA
+              exec:
+                - _block_with_empty_response
+                - _end
+            - forward_remote
+          fast_fallback: 150
+          always_standby: true
+
+  - tag: forward_local
+    type: fast_forward
+    args:
       upstream:     
         - addr: 119.29.29.29
           trusted: true
@@ -859,58 +878,43 @@ plugin:
           idle_timeout: 30
           max_conns: 5          
       timeout: 2
- 
-##### 解析代理域名的插件，clash #####
-  - tag: forward_clash
+
+  - tag: forward_remote
     type: fast_forward
     args:
       upstream:
           addr: 127.0.0.1:5352
           trusted: true
-################ 匹配器插件 #################
-##### 匹配广告域名的插件 #####
-  - tag: adblock_list
+
+  - tag: lazy_cache
+    type: cache
+    args:
+      size: 4096
+      lazy_cache_ttl: 259200
+
+  - tag: query_is_local_domain
     type: query_matcher
     args:
       domain:
-         - ext:./ad/adblock.china.list
-         - ext:./ad/adblock.global.list
-         - ext:./ad/adblock.list     
-         - ext:./geosite.dat:category-ads-all
-##### 匹配黑名单的插件 #####
-  - tag: black_list                   
+        - 'ext:./geosite.dat:cn'
+
+  - tag: query_is_non_local_domain
     type: query_matcher
     args:
       domain:
-        - ext:./global/black.list
-        - ext:./global/proxy.list
-        - ext:./geosite.dat:google
-        - ext:./geosite.dat:geolocation-!cn
-##### 匹配白名单的插件 #####        
-  - tag: white_list                   
+        - 'ext:./geosite.dat:geolocation-!cn'
+
+  - tag: query_is_ad_domain
     type: query_matcher
     args:
       domain:
-        - ext:./china/white.list
-        - ext:./geosite.dat:apple-cn
-        
-##### 匹配直连域名/IP的插件 #####
-  - tag: direct_list                  
-    type: query_matcher
+        - 'ext:./geosite.dat:category-ads-all'
+
+  - tag: response_has_local_ip
+    type: response_matcher
     args:
-      domain:
-        - ext:./geosite.dat:cn
-      client_ip:   
-        - ext:./geoip.dat:cn     
-        
-##### 匹配hosts的插件 #####
-  - tag: hosts
-    type: hosts
-    args:
-      hosts:               
-        - ext:./hosts/hosts.list 
-        
-include: [ ]
+      ip:
+        - 'ext:./geoip.dat:cn'
 EOF
 }
 
@@ -1064,7 +1068,8 @@ echo -e "${green}软件安装完成!${end}"
 }
 
 install_clash() {
-     new_clash_ver=$( wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep clash_v | awk '{print $2}')
+     #new_clash_ver=$( wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep clash_v | awk '{print $2}')
+     new_clash_ver=$(cat /srv/version  | grep clash_v | awk '{print $2}')
      if [[ ! -n "$new_clash_ver" ]]; then
      echo -e "${red}Clash检测版本失败!${end}"
      exit 1
@@ -1083,7 +1088,7 @@ install_clash() {
      mv /tmp/clash/clash /usr/bin/clash
      chmod +x /usr/bin/clash
      setcap cap_net_bind_service=+ep /usr/bin/clash
-     webget2  /tmp/ui.tar.gz  ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/clash/ui.tar.gz >> /dev/null 2>&1
+     webget2  /tmp/dashboard.tar.gz  ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/clash/dashboard.tar.gz
      if [[ $? -ne 0 ]]; then
      echo -e "${red}UI下载失败!${end}"
      exit 1
@@ -1092,8 +1097,9 @@ install_clash() {
      if [ ! -d "/srv/clash" ]; then
      mkdir /srv/clash
      fi 
-     tar zxvf /tmp/ui.tar.gz  -C /srv/clash/ >> /dev/null 2>&1
-     rm -rf /tmp/ui.tar.gz
+     webget2 /srv/clash/Country.mmdb ${url_cdn}/https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Country.mmdb
+     tar zxvf /tmp/dashboard.tar.gz  -C /srv/clash/ >> /dev/null 2>&1
+     rm -rf /tmp/dashboard.tar.gz
      supervisor_clash_config
      supervisorctl update >> /dev/null 2>&1
      supervisorctl restart clash >> /dev/null 2>&1
@@ -1102,7 +1108,8 @@ install_clash() {
 }
 
 update_clash_y() {
-	new_clash_ver=$( wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep clash_v | awk '{print $2}')
+       	#new_clash_ver=$( wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep clash_v | awk '{print $2}')
+        new_clash_ver=$(cat /srv/version  | grep clash_v | awk '{print $2}')
         if [[ ! -n "$new_clash_ver" ]]; then
         echo -e "${red}Clash检测版本失败!${end}"
         exit 1
@@ -1127,10 +1134,11 @@ update_clash_y() {
 }
 
 update_clash() {
-	new_clash_ver=$( wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep clash_v | awk '{print $2}')
+       	#new_clash_ver=$( wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep clash_v | awk '{print $2}')
+        new_clash_ver=$(cat /srv/version  | grep clash_v | awk '{print $2}')
         now_clash_ver=$(clash -v | awk '{print $2}')
-	if [[ "${now_clash_ver}" != "${new_clash_ver}" ]]  ;then
-	echo -e "Clash已有新版本: ${new_clash_ver}，当前版本:${now_clash_ver}，开始安装"
+      	if [[ "${now_clash_ver}" != "${new_clash_ver}" ]]  ;then
+	      echo -e "Clash已有新版本: ${new_clash_ver}，当前版本:${now_clash_ver}，开始安装"
         if [[ ! -n "$new_clash_ver" ]]; then
         echo -e "${red}Clash检测版本失败!${end}"
         exit 1
@@ -1154,26 +1162,19 @@ update_clash() {
 }
 
 install_mosdns() {
-    new_mosdns_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep mosdns_v | awk '{print $2}')
-    if [[ ! -n "$new_mosdns_ver" ]]; then
-    echo -e "${red}Mosdns检测版本失败!${end}"
-    exit 1
-    fi
-    if [ ! -d "/tmp/mosdns" ]; then
-     mkdir /tmp/mosdns
-     fi 
-     webget2   /tmp/mosdns/mosdns.tar.gz ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/mosdns/mosdns.tar.gz  >> /dev/null 2>&1
-     if [[ $? -ne 0 ]]; then
-     echo -e "${red}Mosdns配置下载失败!${end}"
+     #new_mosdns_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep mosdns_v | awk '{print $2}')
+     new_mosdns_ver=$(cat /srv/version  | grep mosdns_v | awk '{print $2}')
+     if [[ ! -n "$new_mosdns_ver" ]]; then
+     echo -e "${red}Mosdns检测版本失败!${end}"
      exit 1
      fi
-     echo -e "${green}Mosdns配置下载成功!${end}" 
+     if [ ! -d "/tmp/mosdns" ]; then
+     mkdir /tmp/mosdns
+     fi 
      cd /tmp/mosdns
-     tar zxvf mosdns.tar.gz  >> /dev/null 2>&1
      if [ ! -d "/srv/mosdns" ]; then
      mkdir /srv/mosdns
      fi 
-     mv /tmp/mosdns/mosdns /srv/
      webget2  /tmp/mosdns/mosdns.zip "$url_cdn/https://github.com/IrineSistiana/mosdns/releases/download/${new_mosdns_ver}/mosdns-linux-${cpucore2}.zip"
      if [[ $? -ne 0 ]]; then
      echo -e "${red}Mosdns下载失败!${end}"
@@ -1185,6 +1186,10 @@ install_mosdns() {
      unzip /tmp/mosdns/mosdns.zip  >> /dev/null 2>&1
      mv mosdns /usr/bin/mosdns
      chmod 777 /usr/bin/mosdns
+     webget2 /srv/mosdns/geoip.dat "$url_cdn/https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"  
+     echo -e "${green}geoip.dat下载成功${end}"	
+     webget2 /srv/mosdns/geosite.dat "$url_cdn/https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
+     echo -e "${green}geosite.dat下载成功${end}"	     
      rm -rf /tmp/mosdns
      supervisor_mosdns_config
      mosdns_config
@@ -1197,7 +1202,8 @@ install_mosdns() {
 
 
 update_mosdns_y() {
-        new_mosdns_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep mosdns_v | awk '{print $2}')
+        #new_mosdns_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep mosdns_v | awk '{print $2}')
+        new_mosdns_ver=$(cat /srv/version  | grep mosdns_v | awk '{print $2}')
         if [[ ! -n "$new_mosdns_ver" ]]; then
         echo -e "${red}Mosdns检测版本失败!${end}"
         exit 1
@@ -1226,7 +1232,8 @@ update_mosdns_y() {
 
 
 update_mosdns() {
-        new_mosdns_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep mosdns_v | awk '{print $2}')
+        #new_mosdns_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep mosdns_v | awk '{print $2}')
+        new_mosdns_ver=$(cat /srv/version  | grep mosdns_v | awk '{print $2}')
         now_mosdns_ver=$(mosdns -v | awk '{print $1}'| cut -d'-' -f1)
 	      if [[ "${now_mosdns_ver}" != "${new_mosdns_ver}" ]]  ;then
 	      echo -e "Mosdns已有新版本: ${new_mosdns_ver}，当前版本:${now_mosdns_ver}，开始安装"
@@ -1259,7 +1266,7 @@ update_mosdns() {
 }
 
 update_shell_y() {
- 	new_shell_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep version | awk '{print $2}')
+ 	      new_shell_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep version | awk '{print $2}')
         webget2  /tmp/clash_ui  $url_cdn/https://raw.githubusercontent.com/fjjonline/c-m/main/clash_ui
         if [[ $? -ne 0 ]]; then
         echo -e "${red}Clash_UI下载失败!${end}"
@@ -1273,9 +1280,9 @@ update_shell_y() {
 }
 
 update_shell() {
-	new_shell_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep version | awk '{print $2}')
-	if [[ "${sh_ver}" != "${new_shell_ver}" ]]  ;then
-	echo -e "`date +%F\ %T` Clash_UI  最新版本: ${new_shell_ver}，当前版本:${sh_ver}"
+	      new_shell_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep version | awk '{print $2}')
+	      if [[ "${sh_ver}" != "${new_shell_ver}" ]]  ;then
+	      echo -e "`date +%F\ %T` Clash_UI  最新版本: ${new_shell_ver}，当前版本:${sh_ver}"
         webget2 /tmp/clash_ui $url_cdn/https://raw.githubusercontent.com/fjjonline/c-m/main/clash_ui
         if [[ $? -ne 0 ]]; then
         echo -e "${red}Clash_UI下载失败!${end}"
@@ -1332,7 +1339,6 @@ crontab /var/spool/cron/crontabs/root
 #sed -i  s/'clash_ui restart'/'clash_ui check_ver'/g  /var/spool/cron/crontabs/root
 
 check_clash_ver() {
-
        new_clash_ver=$(wget -qO- https://api.github.com/repos/Dreamacro/clash/releases | grep '"name": "Premium' | sed -E 's/.*"Premium ([^"]+)".*/\1/')
        #new_clash_ver=$( wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep clash_v | awk '{print $2}')
        now_clash_ver=$(clash -v | awk '{print $2}')
@@ -1431,7 +1437,7 @@ update_clash_config () {
     echo -e "${green}更新clash配置!${end}"	 
     mv /srv/clash/config.yaml /tmp/clash_config.yaml.`date "+%Y.%m.%d.%H:%M"`
     rm -rf /srv/clash/*.yaml
-    webget2 /srv/clash/Country.mmdb ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/clash/Country.mmdb  >> /dev/null 2>&1
+    webget2 /srv/clash/Country.mmdb ${url_cdn}/https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Country.mmdb
     dler_clash_config
     clash_ui restart_clash
    
