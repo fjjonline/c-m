@@ -799,7 +799,7 @@ EOF
 mosdns_config() {
 cat << EOF > /srv/mosdns/config.yaml
 log:
-  level: info           # 日志级别。可选 `debug` `info` `warn` `error`。默认 `info`。
+  level: info
   file: /tmp/mosdns.log
  
 plugin:
