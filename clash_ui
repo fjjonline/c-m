@@ -1454,6 +1454,8 @@ update_mosdns_config () {
 
 
 install() {
+    getcpucore
+    getcpucore2
     check_clash_status2    
     if [[ $? == 0 ]]; then
     echo -e "${green}Clash_UI已安装"
