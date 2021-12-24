@@ -25,7 +25,7 @@ lightblue="\033[0;36m"
 lightblueb="\033[1;36m"
 
 
-sh_ver="3.0.7"
+sh_ver="3.0.8"
 
 
 url_cdn="https://git.o8.cx"
@@ -504,13 +504,13 @@ rule-providers:
     type: http                                # 规则集文件类型（HTTP=在线下载；File=本地导入）
     behavior: classical                       # 行为域
     path: ./ruleset/广告拦截/AdBlock1.list     # 规则集在线下载保存地址或本地文件导入地址
-    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%e5%b9%bf%e5%91%8a%e6%8b%a6%e6%88%aa/AdBlock1.list  #规则集文件下载地址
+    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%e5%b9%bf%e5%91%8a%e6%8b%a6%e6%88%aa/AdBlock1.list  #规则集文件下载地址
     interval: 43200                           # 规则集文件自动更新间隔
   AdBlock2:
     type: http
     behavior: classical
     path: ./ruleset/广告拦截/AdBlock2.list
-    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%e5%b9%bf%e5%91%8a%e6%8b%a6%e6%88%aa/AdBlock2.list
+    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%e5%b9%bf%e5%91%8a%e6%8b%a6%e6%88%aa/AdBlock2.list
     interval: 43200
   AdBlock3:
     type: http
@@ -994,7 +994,7 @@ update_clash_y() {
         echo -e "${red}Clash检测版本失败!${end}"
         exit 1
         fi  
-	if [ ! -d "/tmp/clash" ]; then
+	      if [ ! -d "/tmp/clash" ]; then
         mkdir /tmp/clash
         fi            
         webget2 /tmp/clash/clash.gz "$url_cdn/https://github.com/Dreamacro/clash/releases/download/premium/clash-linux-${cpucore}-${new_clash_ver}.gz"
@@ -1573,7 +1573,7 @@ show_menu() {
     echo -e "   ${yellow}Clash: ${end}$(clash -v | awk '{print $2}') >  ${new_clash_ver}"
     echo -e "  ${yellow}Mosdns: ${end}$(mosdns -v | awk '{print $1}'| cut -d'-' -f1)     >  ${new_mosdns_ver}"
     echo -e "${yellow}Clash_UI: ${end}v${sh_ver}     >  v${new_shell_ver}" ${end}    
-    echo && read -p "请输入选择 [1-10]: " num
+    echo && read -p "请输入选择 [1-9]: " num
 
     case "${num}" in
         q) exit 1
@@ -1596,7 +1596,7 @@ show_menu() {
         ;;
         9) update_mosdns_config
         ;;                    
-        *) echo -e "${red}请输入正确的数字 [1-10]${end}" &&before_show_menu
+        *) echo -e "${red}请输入正确的数字 [1-9]${end}" &&before_show_menu
         ;;
     esac
 }
