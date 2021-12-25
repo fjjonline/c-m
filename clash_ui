@@ -1553,10 +1553,8 @@ show_menu() {
   ${green}4. 日志 ${end}Clash
 ———————————————————————————
   ${green}5. 更新 ${end}Clash_UI
-———————————————————————————
   ${green}6. 更新 ${end}Clash
   ${green}7. 更新 ${end}Mosdns
-———————————————————————————
   ${green}8. 更新 ${end}Clash配置
   ${green}9. 更新 ${end}Mosdns配置"
     echo -e "———————————————————————————"
@@ -1632,8 +1630,10 @@ if [[ $# > 0 ]]; then
         ;;
         "update_config") update_config 0
         ;;                   
-        "update") update_shell_y 0
-        ;;                  
+        "update") update_shell 0
+        ;;
+        "update_y") update_shell_y 0
+        ;;                           
         *) show_usage
         ;;
     esac
