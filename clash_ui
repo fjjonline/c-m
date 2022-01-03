@@ -1058,7 +1058,7 @@ install_mosdns() {
      mkdir /srv/mosdns
      fi 
      webget2  /tmp/mosdns/mosdns.zip "$url_cdn/https://github.com/IrineSistiana/mosdns/releases/download/${new_mosdns_ver}/mosdns-linux-${cpucore2}.zip"
-     if [[ "$result" != "200"]]; then
+        if [[ "$result" != "200" ]]; then
      echo -e "${red}Mosdns下载失败!${end}"
      exit 1
      fi
