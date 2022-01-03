@@ -25,7 +25,7 @@ lightblue="\033[0;36m"
 lightblueb="\033[1;36m"
 
 
-sh_ver="3.0.9"
+sh_ver="3.1.0"
 
 
 url_cdn="https://git.o8.cx"
@@ -958,7 +958,7 @@ install_clash() {
      mkdir /tmp/clash
      fi 
      webget2 /tmp/clash/clash.gz "$url_cdn/https://github.com/Dreamacro/clash/releases/download/premium/clash-linux-${cpucore}-${new_clash_ver}.gz"
-     if [[ $? -ne 0 ]]; then
+     if [["$result" != "200"]]; then
      echo -e "${red}Clash下载失败!${end}"
      exit 1
      fi
@@ -969,7 +969,7 @@ install_clash() {
      chmod +x /usr/bin/clash
      setcap cap_net_bind_service=+ep /usr/bin/clash
      webget2  /tmp/dashboard.tar.gz  ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/clash/dashboard.tar.gz
-     if [[ $? -ne 0 ]]; then
+     if [[ "$result" != "200" ]]; then
      echo -e "${red}UI下载失败!${end}"
      exit 1
      fi
@@ -988,6 +988,8 @@ install_clash() {
 }
 
 update_clash_y() {
+    getcpucore
+    getcpucore2
        	#new_clash_ver=$( wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep clash_v | awk '{print $2}')
         new_clash_ver=$(cat /srv/version  | grep clash_v | awk '{print $2}')
         if [[ ! -n "$new_clash_ver" ]]; then
@@ -998,7 +1000,7 @@ update_clash_y() {
         mkdir /tmp/clash
         fi            
         webget2 /tmp/clash/clash.gz "$url_cdn/https://github.com/Dreamacro/clash/releases/download/premium/clash-linux-${cpucore}-${new_clash_ver}.gz"
-        if [[ $? -ne 0 ]]; then
+        if [["$result" != "200" ]]; then
         echo -e "${red}Clash下载失败!${end}"
         exit 1
         fi
@@ -1027,7 +1029,7 @@ update_clash() {
         mkdir /tmp/clash
         fi 
         webget2 /tmp/clash/clash.gz "$url_cdn/https://github.com/Dreamacro/clash/releases/download/premium/clash-linux-${cpucore}-${new_clash_ver}.gz"
-        if [[ $? -ne 0 ]]; then
+        if [[ "$result" != "200" ]]; then
         echo -e "${red}Clash下载失败!${end}"
         exit 1
         fi
@@ -1056,7 +1058,7 @@ install_mosdns() {
      mkdir /srv/mosdns
      fi 
      webget2  /tmp/mosdns/mosdns.zip "$url_cdn/https://github.com/IrineSistiana/mosdns/releases/download/${new_mosdns_ver}/mosdns-linux-${cpucore2}.zip"
-     if [[ $? -ne 0 ]]; then
+     if [[ "$result" != "200"]]; then
      echo -e "${red}Mosdns下载失败!${end}"
      exit 1
      fi
@@ -1083,6 +1085,8 @@ install_mosdns() {
 
 
 update_mosdns_y() {
+    getcpucore
+    getcpucore2
         #new_mosdns_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep mosdns_v | awk '{print $2}')
         new_mosdns_ver=$(cat /srv/version  | grep mosdns_v | awk '{print $2}'| cut -d'-' -f1)
         if [[ ! -n "$new_mosdns_ver" ]]; then
@@ -1093,7 +1097,7 @@ update_mosdns_y() {
         mkdir /tmp/mosdns
         fi         
         webget2  /tmp/mosdns/mosdns.zip "$url_cdn/https://github.com/IrineSistiana/mosdns/releases/download/${new_mosdns_ver}/mosdns-linux-${cpucore2}.zip"
-        if [[ $? -ne 0 ]]; then
+        if [[ "$result" != "200" ]]; then
         echo -e "${red}Mosdns下载失败!${end}"
         exit 1
         fi
@@ -1128,7 +1132,7 @@ update_mosdns() {
         fi         
         webget2  /tmp/mosdns/mosdns.zip "$url_cdn/https://github.com/IrineSistiana/mosdns/releases/download/${new_mosdns_ver}/mosdns-linux-${cpucore2}.zip"
 	      #[ "$result" != "200" ] && echo "文件下载失败！" && exit 1
-        if [[ $? -ne 0 ]]; then
+        if [[ "$result" != "200" ]]; then
         echo -e "${red}Mosdns下载失败!${end}"
         exit 1
         fi
@@ -1151,7 +1155,7 @@ update_mosdns() {
 update_shell_y() {
  	      new_shell_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep version | awk '{print $2}')
         webget2  /tmp/clash_ui  $url_cdn/https://raw.githubusercontent.com/fjjonline/c-m/main/clash_ui
-        if [[ $? -ne 0 ]]; then
+        if [[ "$result" != "200" ]]; then
         echo -e "${red}Clash_UI下载失败!${end}"
         exit 1
         fi
@@ -1167,7 +1171,7 @@ update_shell() {
 	      if [[ "${sh_ver}" != "${new_shell_ver}" ]]  ;then
 	      echo -e "`date +%F\ %T` Clash_UI  最新版本: ${new_shell_ver}，当前版本:${sh_ver}"
         webget2 /tmp/clash_ui $url_cdn/https://raw.githubusercontent.com/fjjonline/c-m/main/clash_ui
-        if [[ $? -ne 0 ]]; then
+        if [[ "$result" != "200" ]]; then
         echo -e "${red}Clash_UI下载失败!${end}"
         exit 1
         fi
@@ -1185,7 +1189,7 @@ install_nftables() {
      fi
      mkdir -p /etc/nftables
      webget2 /tmp/nftables/nftables.zip  ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/nftables/nftables.zip >> /dev/null 2>&1
-     if [[ $? -ne 0 ]]; then
+     if [[ "$result" != "200" ]]; then
      echo -e "${red}Nftables下载失败!${end}"
      exit 1
      fi
