@@ -25,7 +25,7 @@ lightblue="\033[0;36m"
 lightblueb="\033[1;36m"
 
 
-sh_ver="3.1.0"
+sh_ver="3.1.1"
 
 
 url_cdn="https://git.o8.cx"
@@ -957,7 +957,7 @@ install_clash() {
      if [ ! -d "/tmp/clash" ]; then
      mkdir /tmp/clash
      fi 
-     webget2 /tmp/clash/clash.gz "$url_cdn/https://github.com/Dreamacro/clash/releases/download/premium/clash-linux-${cpucore}-${new_clash_ver}.gz"
+     webget2 /tmp/clash/clash.gz "$url_cdn/https://raw.githubusercontent.com/fjjonline/c-m/main/clash/clash-linux-${cpucore}-${new_clash_ver}.gz"
      if [["$result" != "200"]]; then
      echo -e "${red}Clash下载失败!${end}"
      exit 1
@@ -999,7 +999,7 @@ update_clash_y() {
 	      if [ ! -d "/tmp/clash" ]; then
         mkdir /tmp/clash
         fi            
-        webget2 /tmp/clash/clash.gz "$url_cdn/https://github.com/Dreamacro/clash/releases/download/premium/clash-linux-${cpucore}-${new_clash_ver}.gz"
+        webget2 /tmp/clash/clash.gz "$url_cdn/https://raw.githubusercontent.com/fjjonline/c-m/main/clash/clash-linux-${cpucore}-${new_clash_ver}.gz"
         if [["$result" != "200" ]]; then
         echo -e "${red}Clash下载失败!${end}"
         exit 1
@@ -1028,7 +1028,7 @@ update_clash() {
         if [ ! -d "/tmp/clash" ]; then
         mkdir /tmp/clash
         fi 
-        webget2 /tmp/clash/clash.gz "$url_cdn/https://github.com/Dreamacro/clash/releases/download/premium/clash-linux-${cpucore}-${new_clash_ver}.gz"
+        webget2 /tmp/clash/clash.gz "$url_cdn/https://raw.githubusercontent.com/fjjonline/c-m/main/clash/clash-linux-${cpucore}-${new_clash_ver}.gz"
         if [[ "$result" != "200" ]]; then
         echo -e "${red}Clash下载失败!${end}"
         exit 1
@@ -1045,7 +1045,7 @@ update_clash() {
 
 install_mosdns() {
      #new_mosdns_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep mosdns_v | awk '{print $2}')
-     new_mosdns_ver=$(cat /srv/version  | grep mosdns_v | awk '{print $2}')
+     new_mosdns_ver=$(cat /srv/version  | grep mosdns_v | awk '{print $2}'| cut -d'-' -f1)
      if [[ ! -n "$new_mosdns_ver" ]]; then
      echo -e "${red}Mosdns检测版本失败!${end}"
      exit 1
@@ -1057,7 +1057,7 @@ install_mosdns() {
      if [ ! -d "/srv/mosdns" ]; then
      mkdir /srv/mosdns
      fi 
-     webget2  /tmp/mosdns/mosdns.zip "$url_cdn/https://github.com/IrineSistiana/mosdns/releases/download/${new_mosdns_ver}/mosdns-linux-${cpucore2}.zip"
+     webget2  /tmp/mosdns/mosdns.zip "$url_cdn/https://raw.githubusercontent.com/fjjonline/c-m/main/mosdns/mosdns-linux-${cpucore2}.zip"
         if [[ "$result" != "200" ]]; then
      echo -e "${red}Mosdns下载失败!${end}"
      exit 1
@@ -1088,7 +1088,7 @@ update_mosdns_y() {
     getcpucore
     getcpucore2
         #new_mosdns_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep mosdns_v | awk '{print $2}')
-        new_mosdns_ver=$(cat /srv/version  | grep mosdns_v | awk '{print $2}')
+        new_mosdns_ver=$(cat /srv/version  | grep mosdns_v | awk '{print $2}'| cut -d'-' -f1)
         if [[ ! -n "$new_mosdns_ver" ]]; then
         echo -e "${red}Mosdns检测版本失败!${end}"
         exit 1
@@ -1096,7 +1096,7 @@ update_mosdns_y() {
         if [ ! -d "/tmp/mosdns" ]; then
         mkdir /tmp/mosdns
         fi         
-        webget2  /tmp/mosdns/mosdns.zip "$url_cdn/https://github.com/IrineSistiana/mosdns/releases/download/${new_mosdns_ver}/mosdns-linux-${cpucore2}.zip"
+        webget2  /tmp/mosdns/mosdns.zip "$url_cdn/https://raw.githubusercontent.com/fjjonline/c-m/main/mosdns/mosdns-linux-${cpucore2}.zip"
         if [[ "$result" != "200" ]]; then
         echo -e "${red}Mosdns下载失败!${end}"
         exit 1
@@ -1119,8 +1119,8 @@ update_mosdns_y() {
 
 update_mosdns() {
         #new_mosdns_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep mosdns_v | awk '{print $2}')
-        new_mosdns_ver=$(cat /srv/version  | grep mosdns_v | awk '{print $2}')
-        now_mosdns_ver=$(mosdns -v | awk '{print substr($1,1,13)}')
+        new_mosdns_ver=$(cat /srv/version  | grep mosdns_v | awk '{print $2}'| cut -d'-' -f1)
+        now_mosdns_ver=$(mosdns -v | awk '{print $1}'| cut -d'-' -f1)
 	      if [[ "${now_mosdns_ver}" != "${new_mosdns_ver}" ]]  ;then
 	      echo -e "Mosdns已有新版本: ${new_mosdns_ver}，当前版本:${now_mosdns_ver}，开始安装"
         if [[ ! -n "$new_mosdns_ver" ]]; then
@@ -1130,7 +1130,7 @@ update_mosdns() {
         if [ ! -d "/tmp/mosdns" ]; then
         mkdir /tmp/mosdns
         fi         
-        webget2  /tmp/mosdns/mosdns.zip "$url_cdn/https://github.com/IrineSistiana/mosdns/releases/download/${new_mosdns_ver}/mosdns-linux-${cpucore2}.zip"
+        webget2  /tmp/mosdns/mosdns.zip "$url_cdn/https://raw.githubusercontent.com/fjjonline/c-m/main/mosdns/mosdns-linux-${cpucore2}.zip"
 	      #[ "$result" != "200" ] && echo "文件下载失败！" && exit 1
         if [[ "$result" != "200" ]]; then
         echo -e "${red}Mosdns下载失败!${end}"
@@ -1226,8 +1226,8 @@ crontab /var/spool/cron/crontabs/root
 #sed -i  s/'clash_ui restart'/'clash_ui check_ver'/g  /var/spool/cron/crontabs/root
 
 check_clash_ver() {
-       new_clash_ver=$(wget -qO- https://api.github.com/repos/Dreamacro/clash/releases | grep '"name": "Premium' | sed -E 's/.*"Premium ([^"]+)".*/\1/')
-       #new_clash_ver=$( wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep clash_v | awk '{print $2}')
+       #new_clash_ver=$(wget -qO- https://api.github.com/repos/Dreamacro/clash/releases | grep '"name": "Premium' | sed -E 's/.*"Premium ([^"]+)".*/\1/')
+       new_clash_ver=$( wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep clash_v | awk '{print $2}')
        now_clash_ver=$(clash -v | awk '{print $2}')
        if [ ! -d "/srv/version" ]; then
        cat << EOF > /srv/version
@@ -1240,9 +1240,9 @@ EOF
 }
 
 check_mosdns_ver() {
-       new_mosdns_ver=$(wget -qO- https://api.github.com/repos/IrineSistiana/mosdns/releases | grep '"tag_name": ' | sed -E 's/.*"([^"]+)".*/\1/' | head -n 1)
-       #new_mosdns_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep mosdns_v | awk '{print $2}')
-       now_mosdns_ver=$(mosdns -v | awk '{print substr($1,1,13)}')
+       #new_mosdns_ver=$(wget -qO- https://api.github.com/repos/IrineSistiana/mosdns/releases | grep '"tag_name": ' | sed -E 's/.*"([^"]+)".*/\1/' | head -n 1| cut -d'-' -f1)
+       new_mosdns_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep mosdns_v | awk '{print $2}')
+       now_mosdns_ver=$(mosdns -v | awk '{print $1}'| cut -d'-' -f1)
        sed -i  's/'mosdns_v'/'"mosdns_v ${new_mosdns_ver}"'/g'  /srv/version
 
 }
@@ -1251,8 +1251,6 @@ check_ver() {
 update_shell  
 check_clash_ver
 check_mosdns_ver
-update_clash
-update_mosdns
 }
 
 
@@ -1573,7 +1571,7 @@ show_menu() {
     check_disk_status
     echo -e "${yellow}网络信息: ${end}${local_ip} > ${ipv4}"     
     echo -e "   ${yellow}Clash: ${end}$(clash -v | awk '{print $2}') >  ${new_clash_ver}"
-    echo -e "  ${yellow}Mosdns: ${end}$(mosdns -v | awk '{print substr($1,1,13)}')     >  ${new_mosdns_ver}"
+    echo -e "  ${yellow}Mosdns: ${end}$(mosdns -v | awk '{print $1}'| cut -d'-' -f1)     >  ${new_mosdns_ver}"
     echo -e "${yellow}Clash_UI: ${end}v${sh_ver}     >  v${new_shell_ver}" ${end}    
     echo && read -p "请输入选择 [1-9]: " num
 
