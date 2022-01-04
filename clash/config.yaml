@@ -117,7 +117,7 @@ proxy-providers:
   🌏 全球 QQ:
     type: http
     path: ./QQ.yaml
-    url: https://dler.cloud/subscribe/token?protocols=ss&list=clash&match=hkt|5G|ha|wtt
+    url: https://dler.cloud/subscribe/token?protocols=ss&list=clash&match=hkt|5G|ha|wtt|cht|HINET
     interval: 28800                               # 自动检测时间，单位为秒，意思就是每28800秒更新一次    
     health-check:
       enable: true
