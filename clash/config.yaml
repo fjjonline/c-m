@@ -72,7 +72,7 @@ proxy-providers:
   🇯🇵 日本 JP:                                      # 代理集名称
     type: http                                    # 代理集类型，有http（网络地址）跟file（本地）两种格式
     path: ./JP.yaml                               # 代理集本地路径
-    url: https://dler.cloud/subscribe/token?protocols=ss&list=clash&area=jp&match=South|hc|iepl|ha
+    url: https://dler.cloud/subscribe/token?protocols=ss&list=clash&area=jp&match=hc|iepl
     interval: 28800                               # 自动检测时间，单位为秒，意思就是每28800秒更新一次
     health-check:                                 # 状态检测
       enable: true                                # 开启
@@ -81,7 +81,7 @@ proxy-providers:
   🇸🇬 狮城 SG:
     type: http
     path: ./SG.yaml
-    url: https://dler.cloud/subscribe/token?protocols=ss&list=clash&area=sg&match=South|hc|iepl|ha
+    url: https://dler.cloud/subscribe/token?protocols=ss&list=clash&area=sg&match=hc|iepl
     interval: 28800
     health-check:
       enable: true
@@ -99,7 +99,7 @@ proxy-providers:
   🇭🇰 香港 HK:                                      # 代理集名称
     type: http                                    # 代理集类型，有http（网络地址）跟file（本地）两种格式
     path: ./HK.yaml                               # 代理集本地路径、
-    url: https://dler.cloud/subscribe/token?protocols=ss&list=clash&area=hk&match=South|hc|ha|bgp|iepl
+    url: https://dler.cloud/subscribe/token?protocols=ss&list=clash&area=hk&match=hc|bgp
     interval: 28800                               # 自动检测时间，单位为秒，意思就是每28800秒更新一次
     health-check:                                 # 状态检测
       enable: true                                # 开启
@@ -117,7 +117,7 @@ proxy-providers:
   🌏 全球 QQ:
     type: http
     path: ./QQ.yaml
-    url: https://dler.cloud/subscribe/token?protocols=ss&list=clash&match=ha|South|hc|iepl|bgp|5G
+    url: https://dler.cloud/subscribe/token?protocols=ss&list=clash&match=hkt|5G|ha|wtt
     interval: 28800                               # 自动检测时间，单位为秒，意思就是每28800秒更新一次    
     health-check:
       enable: true
