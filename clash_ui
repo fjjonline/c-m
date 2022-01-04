@@ -333,7 +333,7 @@ install_clash() {
      mkdir /tmp/clash
      fi 
      webget2 /tmp/clash/clash.gz "$url_cdn/https://raw.githubusercontent.com/fjjonline/c-m/main/clash/clash-linux-${cpucore}-${new_clash_ver}.gz"
-     if [["$result" != "200"]]; then
+     if [[ "$result" != "200" ]]; then
      echo -e "${red}Clash下载失败!${end}"
      exit 1
      fi
