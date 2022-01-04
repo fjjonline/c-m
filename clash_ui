@@ -685,7 +685,7 @@ dler_config() {
     if [ ! -d "/srv/clash" ]; then
     mkdir /srv/clash
     fi    
-    webget2 /srv/clash/config.yaml ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/clash/config.yaml
+    webget2 /srv/clash/config.yaml ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/clash/config.yaml  >> /dev/null 2>&1
     sed -i  's/'token'/'"${token}"'/g'  /srv/clash/config.yaml
     sed -i  's/'eth_n'/'"${eth_n}"'/g'  /srv/clash/config.yaml
     fi    
@@ -704,10 +704,7 @@ update_clash_config () {
     mv /srv/clash/config.yaml /tmp/clash_config.yaml.`date "+%Y.%m.%d.%H:%M"`
     rm -rf /srv/clash/*.yaml
     webget2 /srv/clash/Country.mmdb ${url_cdn}/https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Country.mmdb
-    #dler_clash_config
-    webget2 /srv/clash/config.yaml ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/clash/config.yaml
-    sed -i  's/'token'/'"${token}"'/g'  /srv/clash/config.yaml
-    sed -i  's/'eth_n'/'"${eth_n}"'/g'  /srv/clash/config.yaml
+    dler_config
     clash_ui restart_clash
    
     }
