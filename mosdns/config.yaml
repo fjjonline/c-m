@@ -14,11 +14,8 @@ plugin:
       server:                       
         - protocol: udp             
           addr: 0.0.0.0:53          
-          timeout: 5                
         - protocol: tcp
           addr: 0.0.0.0:53
-          timeout: 5
-          idle_timeout: 10   
 
   - tag: main_sequence
     type: sequence
@@ -28,13 +25,13 @@ plugin:
             - query_is_ad_domain
           exec:
             - _block_with_nxdomain
-            - _end
+            - _return
         - if:
             - query_is_local_domain
             - '!_query_is_common'
           exec:
             - forward_local
-            - _end
+            - _return
         - if:
             - query_is_non_local_domain
           exec:
@@ -42,9 +39,9 @@ plugin:
                 - _qtype_AAAA
               exec:
                 - _block_with_empty_response
-                - _end
+                - _return
             - forward_remote
-            - _end
+            - _return
         - primary:
             - forward_local
             - if:
@@ -56,7 +53,7 @@ plugin:
                 - _qtype_AAAA
               exec:
                 - _block_with_empty_response
-                - _end
+                - _return
             - forward_remote
           fast_fallback: 150
           always_standby: true
@@ -68,16 +65,12 @@ plugin:
         - addr: 119.29.29.29
           trusted: true
           idle_timeout: 30
-          max_conns: 5
         - addr: 223.6.6.6
           trusted: true
           idle_timeout: 30
-          max_conns: 5
         - addr: 114.114.114.114
           trusted: true
           idle_timeout: 30
-          max_conns: 5          
-      timeout: 2
 
   - tag: forward_remote
     type: fast_forward
