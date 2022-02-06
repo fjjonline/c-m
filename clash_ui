@@ -2,7 +2,7 @@
 #======================================================
 #   System Required:  Debian 10+ 
 #   Description: Manage clash
-#   Author: J. 20220104
+#   Author: J. 20220206
 #======================================================
 
 
@@ -25,10 +25,10 @@ lightblue="\033[0;36m"
 lightblueb="\033[1;36m"
 
 
-sh_ver="3.1.3"
+sh_ver="3.1.4"
 
 
-url_cdn="https://git.o8.cx"
+url_cdn="https://ghproxy.com"
 
 cpu=$(hostnamectl | grep Architecture: | awk '{print $2}')
 
