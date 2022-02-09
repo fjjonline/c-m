@@ -11,7 +11,7 @@ green='\033[0;32m'
 yellow='\033[0;33m'
 plain='\033[0m'
 
-url_cdn="https://git.o8.cx"
+url_cdn="https://ghproxy.com"
 echo "199.232.68.133 raw.githubusercontent.com" >> /etc/hosts
 webget(){
 	#参数【$1】代表下载目录，【$2】代表在线地址
