@@ -25,7 +25,7 @@ lightblue="\033[0;36m"
 lightblueb="\033[1;36m"
 
 
-sh_ver="3.1.6"
+sh_ver="3.1.7"
 
 
 url_cdn="https://ghproxy.com"
