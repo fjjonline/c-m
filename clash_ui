@@ -25,10 +25,10 @@ lightblue="\033[0;36m"
 lightblueb="\033[1;36m"
 
 
-sh_ver="3.1.5"
+sh_ver="3.1.6"
 
 
-url_cdn="https://git.o8.cx"
+url_cdn="https://gh.api.99988866.xyz"
 
 cpu=$(hostnamectl | grep Architecture: | awk '{print $2}')
 
