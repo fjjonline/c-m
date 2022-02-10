@@ -25,7 +25,7 @@ lightblue="\033[0;36m"
 lightblueb="\033[1;36m"
 
 
-sh_ver="3.2.1"
+sh_ver="3.2.2"
 
 cpu=$(hostnamectl | grep Architecture: | awk '{print $2}')
 
@@ -583,14 +583,14 @@ crontab /var/spool/cron/crontabs/root
 check_clash_ver() {
        new_clash_ver=$( wget -qO- https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/version | grep clash_v | awk '{print $2}')
        now_clash_ver=$(clash -v | awk '{print $2}')
-       sed -i  's/'clash_v'/'"clash_v ${new_clash_ver}"'/g'  /srv/version
+       sed -i  's/'clash_v ${now_clash_ver}'/'"clash_v ${new_clash_ver}"'/g'  /srv/version
 
 }
 
 check_mosdns_ver() {
        new_mosdns_ver=$(wget -qO- https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/version | grep mosdns_v | awk '{print $2}')
        now_mosdns_ver=$(mosdns -v | awk '{print $1}'| cut -d'-' -f1)
-       sed -i  's/'mosdns_v'/'"mosdns_v ${new_mosdns_ver}"'/g'  /srv/version
+       sed -i  's/'mosdns_v ${now_mosdns_ver}'/'"mosdns_v ${new_mosdns_ver}"'/g'  /srv/version
 
 }
 
@@ -598,7 +598,7 @@ check_mosdns_ver() {
 check_shell_ver() {
        new_shell_ver=$(wget -qO- https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/version | grep version | awk '{print $2}')
        now_shell_ver=$(clash_ui v)
-       sed -i  's/'version'/'"version ${new_shell_ver}"'/g'  /srv/version
+       sed -i  's/'version ${now_shell_ver}'/'"version ${new_shell_ver}"'/g'  /srv/version
 
 }
 check_ver() {
