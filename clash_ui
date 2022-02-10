@@ -25,7 +25,7 @@ lightblue="\033[0;36m"
 lightblueb="\033[1;36m"
 
 
-sh_ver="3.2.2"
+sh_ver="3.2.3"
 
 cpu=$(hostnamectl | grep Architecture: | awk '{print $2}')
 
