@@ -524,7 +524,7 @@ update_shell_y() {
 }
 
 update_shell() {
-	      new_shell_ver=$(wget -qO- https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/version | grep version | awk '{print $2}')
+	      new_shell_ver=$(cat /srv/version  | grep version | awk '{print $2}'| cut -d'-' -f1)
 	      if [[ "${sh_ver}" != "${new_shell_ver}" ]]  ;then
 	      echo -e "`date +%F\ %T` Clash_UI  最新版本: ${new_shell_ver}，当前版本:${sh_ver}"
         webget /tmp/clash_ui https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/clash_ui
@@ -570,8 +570,8 @@ install_nftables() {
 install_cron() {
 cat << EOF > /var/spool/cron/crontabs/root
 */5 * * * * clash_ui ping
-*/60 * * * * clash_ui update
-0 5 * * * clash_ui check_ver
+0 */6 * * * clash_ui update
+0 */3 * * * clash_ui check_ver
 EOF
 chmod 777 /var/spool/cron/crontabs/root
 crontab /var/spool/cron/crontabs/root
@@ -586,7 +586,8 @@ check_clash_ver() {
        if [ ! -d "/srv/version" ]; then
        cat << EOF > /srv/version
 clash_v 
-mosdns_v 
+mosdns_v
+version
 EOF
        fi  
        sed -i  's/'clash_v'/'"clash_v ${new_clash_ver}"'/g'  /srv/version
@@ -600,10 +601,18 @@ check_mosdns_ver() {
 
 }
 
+
+check_shell_ver() {
+       new_shell_ver=$(wget -qO- https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/version | grep version | awk '{print $2}')
+       now_shell_ver=$(clash_ui v)
+       sed -i  's/'version'/'"version ${new_shell_ver}"'/g'  /srv/version
+
+}
 check_ver() {
 update_shell  
 check_clash_ver
 check_mosdns_ver
+check_shell_ver
 }
 
 
@@ -887,6 +896,7 @@ show_usage() {
     echo -e "${blueb}Clash_UI 管理脚本 V${sh_ver} J. "
     echo "-------------------------------------------------"
     echo -e "${green}clash_ui                      - 显示管理菜单"
+    echo -e "${green}clash_ui v                    - 显示 Clash_UI 版本号"
     echo -e "${green}clash_ui install              - 安装 Clash+Mosdns"    
     echo -e "${green}clash_ui restart_clash        - 重启 Clash"
     echo -e "${green}clash_ui restart_mosdns       - 重启 Mosdns"
@@ -993,7 +1003,9 @@ if [[ $# > 0 ]]; then
         "update") update_shell 0
         ;;
         "update_y") update_shell_y 0
-        ;;                           
+        ;;
+        "v") echo -e "${sh_ver}"
+        ;;                                    
         *) show_usage
         ;;
     esac
