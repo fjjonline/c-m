@@ -724,7 +724,7 @@ install() {
     echo -e "${green}请将config.yaml配置文件上传到/root"	
     check_disk_status
     echo "---------------------------------------"
-    update_shell
+    #update_shell
     read -e -p "输入本机IP:" ip_add
     read -e -p "输入子网码:" ip_mask
     read -e -p "输入网关:" ip_gw
