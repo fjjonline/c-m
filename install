@@ -44,4 +44,4 @@ echo -e "${green}Clash_ui 安装成功${plain}"
 echo -e "${green}Clash_UI使用方法 clash_ui${plain}"
 echo -e "${green}第一次请用命令安装 clash_ui install${plain}"
 echo "---------------------------------------"
-clash_ui install
+#clash_ui install
