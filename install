@@ -12,6 +12,7 @@ yellow='\033[0;33m'
 plain='\033[0m'
 
 echo "199.232.68.133 raw.githubusercontent.com" >> /etc/hosts
+
 webget(){
 	#参数【$1】代表下载目录，【$2】代表在线地址
 	#参数【$3】代表输出显示，【$4】不启用重定向
@@ -33,16 +34,17 @@ webget(){
 	fi
 }
     rm -rf /srv/version
-    webget /srv/version https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/version
+    webget /srv/version https://git.o8.cx/https://raw.githubusercontent.com/fjjonline/c-m/main/version
 	if [[ "$result" != "200" ]]; then
-    webget /srv/version https://raw.githubusercontent.com/fjjonline/c-m/main/version
+    webget /srv/version https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/version
     fi
 
+    webget /usr/bin/clash_ui https://git.o8.cx/https://raw.githubusercontent.com/fjjonline/c-m/main/clash_ui
+	if [[ "$result" != "200" ]]; then
+    webget /usr/bin/clash_ui https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/clash_ui
+    fi
 
-#wget -O /srv/version https://raw.githubusercontent.com/fjjonline/c-m/main/version >> /dev/null 2>&1
-webget /usr/bin/clash_ui https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/clash_ui
-#wget -O /usr/bin/clash_ui https://raw.githubusercontent.com/fjjonline/c-m/main/clash_ui >> /dev/null 2>&1
-chmod +x /usr/bin/clash_ui >> /dev/null 2>&1
+    chmod +x /usr/bin/clash_ui >> /dev/null 2>&1
 echo "---------------------------------------"
 echo -e "${green}Clash_ui 安装成功${plain}"
 echo -e "${green}Clash_UI使用方法 clash_ui${plain}"
