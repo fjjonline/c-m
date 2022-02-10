@@ -33,7 +33,7 @@ webget(){
 	fi
 }
 rm -rf /srv/version
-webget /srv/version https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/version >> /dev/null 2>&1
+webget /srv/version https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/version
 #wget -O /srv/version https://raw.githubusercontent.com/fjjonline/c-m/main/version >> /dev/null 2>&1
 webget /usr/bin/clash_ui https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/clash_ui
 #wget -O /usr/bin/clash_ui https://raw.githubusercontent.com/fjjonline/c-m/main/clash_ui >> /dev/null 2>&1
