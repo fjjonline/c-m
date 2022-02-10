@@ -583,9 +583,6 @@ crontab /var/spool/cron/crontabs/root
 check_clash_ver() {
        new_clash_ver=$( wget -qO- https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/version | grep clash_v | awk '{print $2}')
        now_clash_ver=$(clash -v | awk '{print $2}')
-       if [ ! -d "/srv/version" ]; then
-       webget /srv/version https://raw.githubusercontent.com/fjjonline/c-m/main/version >> /dev/null 2>&1
-       fi  
        sed -i  's/'clash_v'/'"clash_v ${new_clash_ver}"'/g'  /srv/version
 
 }
@@ -605,10 +602,12 @@ check_shell_ver() {
 
 }
 check_ver() {
-update_shell  
-check_clash_ver
-check_mosdns_ver
-check_shell_ver
+       if [ ! -d "/srv/version" ]; then
+       webget /srv/version https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/version >> /dev/null 2>&1
+       fi  
+       check_clash_ver
+       check_mosdns_ver
+       check_shell_ver
 }
 
 
