@@ -32,7 +32,7 @@ webget(){
 		[ $? -eq 0 ] && result="200"
 	fi
 }
-
+rm -rf /srv/version
 webget /srv/version https://raw.githubusercontent.com/fjjonline/c-m/main/version >> /dev/null 2>&1
 #wget -O /srv/version https://raw.githubusercontent.com/fjjonline/c-m/main/version >> /dev/null 2>&1
 webget /usr/bin/clash_ui https://raw.githubusercontent.com/fjjonline/c-m/main/clash_ui
