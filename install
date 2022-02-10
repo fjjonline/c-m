@@ -33,7 +33,6 @@ webget(){
 		[ $? -eq 0 ] && result="200"
 	fi
 }
-    rm -rf /srv/version
     webget /srv/version https://git.o8.cx/https://raw.githubusercontent.com/fjjonline/c-m/main/version
 	if [[ "$result" != "200" ]]; then
     webget /srv/version https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/version
