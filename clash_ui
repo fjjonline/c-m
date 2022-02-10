@@ -25,10 +25,7 @@ lightblue="\033[0;36m"
 lightblueb="\033[1;36m"
 
 
-sh_ver="3.1.8"
-
-
-url_cdn="https://git.o8.cx/"
+sh_ver="3.2.0"
 
 cpu=$(hostnamectl | grep Architecture: | awk '{print $2}')
 
@@ -324,7 +321,7 @@ install_clash() {
      if [ ! -d "/tmp/clash" ]; then
      mkdir /tmp/clash
      fi 
-     webget /tmp/clash/clash.gz "${url_cdn}https://raw.githubusercontent.com/fjjonline/c-m/main/clash/clash-linux-${cpucore}-${new_clash_ver}.gz"
+     webget /tmp/clash/clash.gz "https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/clash/clash-linux-${cpucore}-${new_clash_ver}.gz"
      if [[ "$result" != "200" ]]; then
      echo -e "${red}Clash下载失败!${end}"
      exit 1
@@ -335,7 +332,7 @@ install_clash() {
      mv /tmp/clash/clash /usr/bin/clash
      chmod +x /usr/bin/clash
      setcap cap_net_bind_service=+ep /usr/bin/clash
-     webget  /tmp/dashboard.tar.gz  ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/clash/dashboard.tar.gz
+     webget  /tmp/dashboard.tar.gz  https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/clash/dashboard.tar.gz
      if [[ "$result" != "200" ]]; then
      echo -e "${red}UI下载失败!${end}"
      exit 1
@@ -344,7 +341,7 @@ install_clash() {
      if [ ! -d "/srv/clash" ]; then
      mkdir /srv/clash
      fi 
-     webget /srv/clash/Country.mmdb ${url_cdn}/https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Country.mmdb
+     webget /srv/clash/Country.mmdb https://cdn.jsdelivr.net/gh/Loyalsoldier/geoip@release/Country.mmdb
      tar zxvf /tmp/dashboard.tar.gz  -C /srv/clash/ >> /dev/null 2>&1
      rm -rf /tmp/dashboard.tar.gz
      supervisor_clash_config
@@ -365,7 +362,7 @@ update_clash_y() {
 	      if [ ! -d "/tmp/clash" ]; then
         mkdir /tmp/clash
         fi            
-        webget /tmp/clash/clash.gz "${url_cdn}https://raw.githubusercontent.com/fjjonline/c-m/main/clash/clash-linux-${cpucore}-${new_clash_ver}.gz"
+        webget /tmp/clash/clash.gz "https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/clash/clash-linux-${cpucore}-${new_clash_ver}.gz"
         if [["$result" != "200" ]]; then
         echo -e "${red}Clash下载失败!${end}"
         exit 1
@@ -393,7 +390,7 @@ update_clash() {
         if [ ! -d "/tmp/clash" ]; then
         mkdir /tmp/clash
         fi 
-        webget /tmp/clash/clash.gz "${url_cdn}https://raw.githubusercontent.com/fjjonline/c-m/main/clash/clash-linux-${cpucore}-${new_clash_ver}.gz"
+        webget /tmp/clash/clash.gz "https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/clash/clash-linux-${cpucore}-${new_clash_ver}.gz"
         if [[ "$result" != "200" ]]; then
         echo -e "${red}Clash下载失败!${end}"
         exit 1
@@ -421,7 +418,7 @@ install_mosdns() {
      if [ ! -d "/srv/mosdns" ]; then
      mkdir /srv/mosdns
      fi 
-     webget  /tmp/mosdns/mosdns.zip "${url_cdn}https://raw.githubusercontent.com/fjjonline/c-m/main/mosdns/mosdns-linux-${cpucore2}.zip"
+     webget  /tmp/mosdns/mosdns.zip "https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/mosdns/mosdns-linux-${cpucore2}.zip"
         if [[ "$result" != "200" ]]; then
      echo -e "${red}Mosdns下载失败!${end}"
      exit 1
@@ -432,11 +429,11 @@ install_mosdns() {
      unzip /tmp/mosdns/mosdns.zip  >> /dev/null 2>&1
      mv mosdns /usr/bin/mosdns
      chmod 777 /usr/bin/mosdns
-     webget /srv/mosdns/config.yaml "${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/mosdns/config.yaml"  
+     webget /srv/mosdns/config.yaml "https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/mosdns/config.yaml"  
      echo -e "${green}config.yaml下载成功${end}"	     
-     webget /srv/mosdns/geoip.dat "${url_cdn}https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"  
+     webget /srv/mosdns/geoip.dat "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat"  
      echo -e "${green}geoip.dat下载成功${end}"	
-     webget /srv/mosdns/geosite.dat "${url_cdn}https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
+     webget /srv/mosdns/geosite.dat "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat"
      echo -e "${green}geosite.dat下载成功${end}"	     
      rm -rf /tmp/mosdns
      supervisor_mosdns_config
@@ -459,7 +456,7 @@ update_mosdns_y() {
         if [ ! -d "/tmp/mosdns" ]; then
         mkdir /tmp/mosdns
         fi         
-        webget  /tmp/mosdns/mosdns.zip "${url_cdn}https://raw.githubusercontent.com/fjjonline/c-m/main/mosdns/mosdns-linux-${cpucore2}.zip"
+        webget  /tmp/mosdns/mosdns.zip "https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/mosdns/mosdns-linux-${cpucore2}.zip"
         if [[ "$result" != "200" ]]; then
         echo -e "${red}Mosdns下载失败!${end}"
         exit 1
@@ -468,7 +465,7 @@ update_mosdns_y() {
         cd /tmp/mosdns
         rm -rf /usr/bin/mosdns
         rm -rf /srv/mosdns/config.yaml
-        webget /srv/mosdns/config.yaml "${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/mosdns/config.yaml"  
+        webget /srv/mosdns/config.yaml "https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/mosdns/config.yaml"  
         echo -e "${green}config.yaml下载成功${end}"	
         unzip /tmp/mosdns/mosdns.zip  >> /dev/null 2>&1
         mv mosdns /usr/bin/mosdns
@@ -492,7 +489,7 @@ update_mosdns() {
         if [ ! -d "/tmp/mosdns" ]; then
         mkdir /tmp/mosdns
         fi         
-        webget  /tmp/mosdns/mosdns.zip "${url_cdn}https://raw.githubusercontent.com/fjjonline/c-m/main/mosdns/mosdns-linux-${cpucore2}.zip"
+        webget  /tmp/mosdns/mosdns.zip "https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/mosdns/mosdns-linux-${cpucore2}.zip"
         if [[ "$result" != "200" ]]; then
         echo -e "${red}Mosdns下载失败!${end}"
         exit 1
@@ -501,7 +498,7 @@ update_mosdns() {
         cd /tmp/mosdns
         rm -rf /usr/bin/mosdns
         rm -rf /srv/mosdns/config.yaml
-        webget /srv/mosdns/config.yaml "${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/mosdns/config.yaml"  
+        webget /srv/mosdns/config.yaml "https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/mosdns/config.yaml"  
         echo -e "${green}config.yaml下载成功${end}"	
         unzip /tmp/mosdns/mosdns.zip  >> /dev/null 2>&1
         mv /tmp/mosdns/mosdns /usr/bin/mosdns
@@ -514,8 +511,8 @@ update_mosdns() {
 }
 
 update_shell_y() {
- 	      new_shell_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep version | awk '{print $2}')
-        webget  /tmp/clash_ui  $url_cdn/https://raw.githubusercontent.com/fjjonline/c-m/main/clash_ui
+ 	      new_shell_ver=$(wget -qO- https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/version | grep version | awk '{print $2}')
+        webget  /tmp/clash_ui  https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/clash_ui
         if [[ "$result" != "200" ]]; then
         echo -e "${red}Clash_UI下载失败!${end}"
         exit 1
@@ -528,10 +525,10 @@ update_shell_y() {
 }
 
 update_shell() {
-	      new_shell_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep version | awk '{print $2}')
+	      new_shell_ver=$(wget -qO- https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/version | grep version | awk '{print $2}')
 	      if [[ "${sh_ver}" != "${new_shell_ver}" ]]  ;then
 	      echo -e "`date +%F\ %T` Clash_UI  最新版本: ${new_shell_ver}，当前版本:${sh_ver}"
-        webget /tmp/clash_ui $url_cdn/https://raw.githubusercontent.com/fjjonline/c-m/main/clash_ui
+        webget /tmp/clash_ui https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/clash_ui
         if [[ "$result" != "200" ]]; then
         echo -e "${red}Clash_UI下载失败!${end}"
         exit 1
@@ -549,7 +546,7 @@ install_nftables() {
      mkdir /tmp/nftables
      fi
      mkdir -p /etc/nftables
-     webget /tmp/nftables/nftables.zip  ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/nftables/nftables.zip >> /dev/null 2>&1
+     webget /tmp/nftables/nftables.zip  https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/nftables/nftables.zip >> /dev/null 2>&1
      if [[ "$result" != "200" ]]; then
      echo -e "${red}Nftables下载失败!${end}"
      exit 1
@@ -585,7 +582,7 @@ crontab /var/spool/cron/crontabs/root
 
 
 check_clash_ver() {
-       new_clash_ver=$( wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep clash_v | awk '{print $2}')
+       new_clash_ver=$( wget -qO- https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/version | grep clash_v | awk '{print $2}')
        now_clash_ver=$(clash -v | awk '{print $2}')
        if [ ! -d "/srv/version" ]; then
        cat << EOF > /srv/version
@@ -598,7 +595,7 @@ EOF
 }
 
 check_mosdns_ver() {
-       new_mosdns_ver=$(wget -qO- ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/version | grep mosdns_v | awk '{print $2}')
+       new_mosdns_ver=$(wget -qO- https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/version | grep mosdns_v | awk '{print $2}')
        now_mosdns_ver=$(mosdns -v | awk '{print $1}'| cut -d'-' -f1)
        sed -i  's/'mosdns_v'/'"mosdns_v ${new_mosdns_ver}"'/g'  /srv/version
 
@@ -666,7 +663,7 @@ dler_config() {
     if [ ! -d "/srv/clash" ]; then
     mkdir /srv/clash
     fi    
-    webget /srv/clash/config.yaml ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/clash/config.yaml  >> /dev/null 2>&1
+    webget /srv/clash/config.yaml https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/clash/config.yaml  >> /dev/null 2>&1
     sed -i  's/'token'/'"${token}"'/g'  /srv/clash/config.yaml
     sed -i  's/'eth_n'/'"${eth_n}"'/g'  /srv/clash/config.yaml
     fi    
@@ -685,8 +682,8 @@ update_clash_config () {
     token=$(cat /srv/clash/config.yaml |  awk '/'dler'/ {print substr($2,30,16)}' |head -n 1)
     mv /srv/clash/config.yaml /tmp/clash_config.yaml.`date "+%Y.%m.%d.%H:%M"`
     rm -rf /srv/clash/*.yaml
-    webget /srv/clash/Country.mmdb ${url_cdn}/https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Country.mmdb
-    webget /srv/clash/config.yaml ${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/clash/config.yaml  >> /dev/null 2>&1
+    webget /srv/clash/Country.mmdb https://cdn.jsdelivr.net/gh/Loyalsoldier/geoip@release/Country.mmdb
+    webget /srv/clash/config.yaml https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/clash/config.yaml  >> /dev/null 2>&1
     sed -i  's/'token'/'"${token}"'/g'  /srv/clash/config.yaml
     sed -i  's/'eth_n'/'"${eth_n}"'/g'  /srv/clash/config.yaml
     clash_ui restart_clash
@@ -700,11 +697,11 @@ update_mosdns_config () {
      update_shell
      echo -e "${green}更新mosdns配置!${end}"	
      mv /srv/mosdns/config.yaml /tmp/mosdns_config.yaml.`date "+%Y.%m.%d.%H:%M"`
-     webget /srv/mosdns/config.yaml "${url_cdn}/https://raw.githubusercontent.com/fjjonline/c-m/main/mosdns/config.yaml"  
+     webget /srv/mosdns/config.yaml "https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/mosdns/config.yaml"  
      echo -e "${green}config.yaml下载成功${end}"	     
-     webget /srv/mosdns/geoip.dat "${url_cdn}https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"  
+     webget /srv/mosdns/geoip.dat "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat"  
      echo -e "${green}geoip.dat下载成功${end}"	
-     webget /srv/mosdns/geosite.dat "${url_cdn}https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
+     webget /srv/mosdns/geosite.dat "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat"
      echo -e "${green}geosite.dat下载成功${end}"
      clash_ui restart_mosdns
     }
