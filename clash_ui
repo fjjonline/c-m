@@ -511,17 +511,16 @@ update_mosdns() {
 }
 
 update_shell_y() {
- 	      new_shell_ver=$(wget -qO- https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/version | grep version | awk '{print $2}')
         webget  /tmp/clash_ui  https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/clash_ui
         if [[ "$result" != "200" ]]; then
         echo -e "${red}Clash_UI下载失败!${end}"
         exit 1
         fi
-        echo -e "`date +%F\ %T` Clash_UI v${new_shell_ver} 下载成功!" >> /tmp/update.log  2>&1
+        echo -e "`date +%F\ %T` Clash_UI  下载成功!" >> /tmp/update.log  2>&1
         rm -rf /usr/bin/clash_ui   
         mv /tmp/clash_ui /usr/bin/clash_ui  >> /dev/null 2>&1
         chmod +x /usr/bin/clash_ui >> /dev/null 2>&1
-        echo -e "${green}Clash_UI v${new_shell_ver}强制升级成功，请重新运行脚本!${end}" && exit 0
+        echo -e "${green}Clash_UI 强制升级成功，请重新运行脚本!${end}" && exit 0
 }
 
 update_shell() {
