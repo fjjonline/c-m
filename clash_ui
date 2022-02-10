@@ -604,9 +604,9 @@ check_shell_ver() {
 check_ver() {
        rm -rf /srv/version
        webget /srv/version https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/version >> /dev/null 2>&1 
-       check_clash_ver
-       check_mosdns_ver
-       check_shell_ver
+       #check_clash_ver
+       #check_mosdns_ver
+       #check_shell_ver
 }
 
 
