@@ -25,7 +25,7 @@ lightblue="\033[0;36m"
 lightblueb="\033[1;36m"
 
 
-sh_ver="3.2.3"
+sh_ver="3.3.0"
 
 cpu=$(hostnamectl | grep Architecture: | awk '{print $2}')
 
@@ -579,7 +579,7 @@ crontab /var/spool/cron/crontabs/root
 }
 
 check_ver() {
-       webget /srv/version https://git.o8.cx/https://raw.githubusercontent.com/fjjonline/c-m/main/version  >> /dev/null 2>&1
+       webget /srv/version https://raw.githubusercontent.com/fjjonline/c-m/main/version  >> /dev/null 2>&1
 	   if [[ "$result" != "200" ]]; then
        webget /srv/version https://cdn.jsdelivr.net/gh/fjjonline/c-m@master/version  >> /dev/null 2>&1
        fi
