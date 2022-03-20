@@ -330,31 +330,31 @@ rule-providers:
     type: http                                # 规则集文件类型（HTTP=在线下载；File=本地导入）
     behavior: classical                       # 行为域
     path: ./ruleset/广告拦截/AdBlock1.list     # 规则集在线下载保存地址或本地文件导入地址
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%e5%b9%bf%e5%91%8a%e6%8b%a6%e6%88%aa/AdBlock1.list  #规则集文件下载地址
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%e5%b9%bf%e5%91%8a%e6%8b%a6%e6%88%aa/AdBlock1.list  #规则集文件下载地址
     interval: 43200                           # 规则集文件自动更新间隔
   AdBlock2:
     type: http
     behavior: classical
     path: ./ruleset/广告拦截/AdBlock2.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%e5%b9%bf%e5%91%8a%e6%8b%a6%e6%88%aa/AdBlock2.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%e5%b9%bf%e5%91%8a%e6%8b%a6%e6%88%aa/AdBlock2.list
     interval: 43200
   AdBlock3:
     type: http
     behavior: classical
     path: ./ruleset/广告拦截/AdBlock3.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%e5%b9%bf%e5%91%8a%e6%8b%a6%e6%88%aa/AdBlock3.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%e5%b9%bf%e5%91%8a%e6%8b%a6%e6%88%aa/AdBlock3.list
     interval: 43200
   AdBlock4:
     type: http
     behavior: classical
     path: ./ruleset/广告拦截/AdBlock4.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%B9%BF%E5%91%8A%E6%8B%A6%E6%88%AA/AdBlock4.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%B9%BF%E5%91%8A%E6%8B%A6%E6%88%AA/AdBlock4.list
     interval: 43200
   AdBlock5:
     type: http
     behavior: classical
     path: ./ruleset/广告拦截/AdBlock5.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%e5%b9%bf%e5%91%8a%e6%8b%a6%e6%88%aa/AdBlock5.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%e5%b9%bf%e5%91%8a%e6%8b%a6%e6%88%aa/AdBlock5.list
     interval: 43200
 ## > 媒体服务
   # > 油管
@@ -362,70 +362,70 @@ rule-providers:
     type: http
     behavior: classical
     path: ./ruleset/媒体服务/YouTube.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/YouTube.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/YouTube.list
     interval: 43200
   # > 奈飞
   Netflix:
     type: http
     behavior: classical
     path: ./ruleset/媒体服务/Netflix.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/Netflix.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/Netflix.list
     interval: 43200
   # > 迪士尼+
   Disney:
     type: http
     behavior: classical
     path: ./ruleset/媒体服务/Disney.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/Disney.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/Disney.list
     interval: 43200
   # > HBO
   HBO:
     type: http
     behavior: classical
     path: ./ruleset/媒体服务/HBO.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/HBO.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/HBO.list
     interval: 43200
   # > 港澳台媒体
   HMTmedia:
     type: http
     behavior: classical
     path: ./ruleset/媒体服务/HMTmedia.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/HMTmedia.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/HMTmedia.list
     interval: 43200
   # > 油管音乐   
   YoutubeMusic:
     type: http
     behavior: classical
     path: ./ruleset/媒体服务/YoutubeMusic.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/YoutubeMusic.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/YoutubeMusic.list
     interval: 43200
   # > Apple TV
   AppleTV:
     type: http
     behavior: classical
     path: ./ruleset/媒体服务/AppleTV.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%e5%aa%92%e4%bd%93%e6%9c%8d%e5%8a%a1/AppleTV.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%e5%aa%92%e4%bd%93%e6%9c%8d%e5%8a%a1/AppleTV.list
     interval: 43200
   # > 其余国际流媒体
   GlobalMedia:
     type: http
     behavior: classical
     path: ./ruleset/媒体服务/GlobalMedia.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/GlobalMedia.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/GlobalMedia.list
     interval: 43200
   # > 国内流媒体
   Chinesemedia:
     type: http
     behavior: classical
     path: ./ruleset/媒体服务/Chinesemedia.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/Chinesemedia.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/Chinesemedia.list
     interval: 43200
   # 网易云
   wyy:
     type: http
     behavior: classical
     path: ./ruleset/媒体服务/wyy.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/wyy.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E5%AA%92%E4%BD%93%E6%9C%8D%E5%8A%A1/wyy.list
     interval: 43200    
 ## > 网络服务
   # > 苹果服务
@@ -434,97 +434,97 @@ rule-providers:
     type: http
     behavior: classical
     path: ./ruleset/网络服务/AppleAPI.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%e7%bd%91%e7%bb%9c%e6%9c%8d%e5%8a%a1/AppleAPI.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%e7%bd%91%e7%bb%9c%e6%9c%8d%e5%8a%a1/AppleAPI.list
     interval: 43200
   # 苹果CDN
   AppleCDN:
     type: http
     behavior: classical
     path: ./ruleset/网络服务/AppleCDN.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/AppleCDN.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/AppleCDN.list
     interval: 43200
   # 谷歌服务
   Google:
     type: http
     behavior: classical
     path: ./ruleset/网络服务/Google.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%e7%bd%91%e7%bb%9c%e6%9c%8d%e5%8a%a1/Google.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%e7%bd%91%e7%bb%9c%e6%9c%8d%e5%8a%a1/Google.list
     interval: 43200
   # > 谷歌CDN
   GoogleCDN:
     type: http
     behavior: classical
     path: ./ruleset/网络服务/GoogleCDN.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%e7%bd%91%e7%bb%9c%e6%9c%8d%e5%8a%a1/GoogleCDN.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%e7%bd%91%e7%bb%9c%e6%9c%8d%e5%8a%a1/GoogleCDN.list
     interval: 43200
   # 微软服务
   Microsoft:  
     type: http
     behavior: classical
     path: ./ruleset/网络服务/Microsoft.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/Microsoft.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/Microsoft.list
     interval: 43200
   # > 微软CDN
   MicrosoftCDN:
     type: http
     behavior: classical
     path: ./ruleset/网络服务/MicrosoftCDN.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/MicrosoftCDN.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/MicrosoftCDN.list
     interval: 43200
   # 数字货币
   Digital:
     type: http
     behavior: classical
     path: ./ruleset/网络服务/Digital.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/Digital.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/Digital.list
     interval: 43200    
   # Paypal
   Paypal:
     type: http
     behavior: classical
     path: ./ruleset/网络服务/Paypal.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/Paypal.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/Paypal.list
     interval: 43200
   # Speedtest
   Speedtest:
     type: http
     behavior: classical
     path: ./ruleset/网络服务/Speedtest.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/Speedtest.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/Speedtest.list
     interval: 43200
   # 即时通讯（TG,KAKAO,LINE....)
   Telegram:
     type: http
     behavior: classical
     path: ./ruleset/网络服务/Telegram.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/Telegram.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/Telegram.list
     interval: 43200
   # 游戏平台（Steam,xbox,PS,战网）
   gameline:
     type: http
     behavior: classical
     path: ./ruleset/网络服务/gameline.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/gameline.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/gameline.list
     interval: 43200
   # > 回国线路 
   Domestic:
     type: http
     behavior: classical
     path: ./ruleset/网络服务/Domestic.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/Domestic.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/Domestic.list
     interval: 43200
   Lan:
     type: http
     behavior: classical
     path: ./ruleset/网络服务/Lan.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/Lan.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1/Lan.list
     interval: 43200
   # > 国际互联
   Proxy:
     type: http
     behavior: classical
     path: ./ruleset/网络服务/Proxy.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%e7%bd%91%e7%bb%9c%e6%9c%8d%e5%8a%a1/Proxy.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%e7%bd%91%e7%bb%9c%e6%9c%8d%e5%8a%a1/Proxy.list
     interval: 43200
 ## > 黑白名单
   # > 黑名单
@@ -532,14 +532,14 @@ rule-providers:
     type: http
     behavior: classical
     path: ./ruleset/黑白名单/Black.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E9%BB%91%E7%99%BD%E5%90%8D%E5%8D%95/Black.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E9%BB%91%E7%99%BD%E5%90%8D%E5%8D%95/Black.list
     interval: 43200
   # > 白名单
   White:
     type: http
     behavior: classical
     path: ./ruleset/黑白名单/White.list
-    url: https://git.o8.cx/https://raw.githubusercontent.com/clash1step/rule-provider/master/%E9%BB%91%E7%99%BD%E5%90%8D%E5%8D%95/White.list
+    url: https://raw.githubusercontent.com/clash1step/rule-provider/master/%E9%BB%91%E7%99%BD%E5%90%8D%E5%8D%95/White.list
     interval: 43200
 
 # Script匹配模式
